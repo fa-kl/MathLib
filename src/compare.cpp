@@ -11,28 +11,35 @@
  ****************************************************************************************/
 
 #include "compare.hpp"
+
 #include <cmath>
 
-namespace mathlib {
+namespace mathlib
+{
 
-bool isFuzzyEqual(real_t value1, real_t value2, real_t epsilon) {
-  return std::abs(value1 - value2) < epsilon;
+bool isFuzzyEqual(real_t value1, real_t value2, real_t epsilon)
+{
+  return std::abs(value1 - value2) <= epsilon;
 }
 
-bool isFuzzyGreater(real_t value1, real_t value2, real_t epsilon) {
-  return value1 + epsilon > value2;
+bool isFuzzyGreater(real_t value1, real_t value2, real_t epsilon)
+{
+  return value1 >= value2 + epsilon;
 }
 
-bool isFuzzySmaller(real_t value1, real_t value2, real_t epsilon) {
-  return value1 < epsilon + value2;
+bool isFuzzySmaller(real_t value1, real_t value2, real_t epsilon)
+{
+  return value1 <= value2 - epsilon;
 }
 
-bool isStrictFuzzyGreater(real_t value1, real_t value2, real_t epsilon) {
+bool isStrictFuzzyGreater(real_t value1, real_t value2, real_t epsilon)
+{
   return value1 > epsilon + value2;
 }
 
-bool isStrictFuzzySmaller(real_t value1, real_t value2, real_t epsilon) {
+bool isStrictFuzzySmaller(real_t value1, real_t value2, real_t epsilon)
+{
   return value1 + epsilon < value2;
 }
 
-} // namespace mathlib
+}  // namespace mathlib

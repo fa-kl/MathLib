@@ -14,7 +14,8 @@
 
 #include "config.hpp"
 
-namespace mathlib {
+namespace mathlib
+{
 
 /// @brief Compare to real (floating point) values for equality
 /// @param value1 First real value
@@ -45,8 +46,7 @@ bool isFuzzySmaller(real_t value1, real_t value2, real_t epsilon = EPSILON);
 /// @param epsilon Comparison tolerance
 /// @returns True if the first value is strictly greater than the second value
 /// within the given tolerance
-bool isStrictFuzzyGreater(real_t value1, real_t value2,
-                          real_t epsilon = EPSILON);
+bool isStrictFuzzyGreater(real_t value1, real_t value2, real_t epsilon = EPSILON);
 
 /// @brief Check whether the value1 is strictly smaller than value2
 /// @param value1 First real value
@@ -54,7 +54,6 @@ bool isStrictFuzzyGreater(real_t value1, real_t value2,
 /// @param epsilon Comparison tolerance
 /// @returns True if the first value is strictly smaller than the second value
 /// within the given tolerance
-bool isStrictFuzzySmaller(real_t value1, real_t value2,
-                          real_t epsilon = EPSILON);
+bool isStrictFuzzySmaller(real_t value1, real_t value2, real_t epsilon = EPSILON);
 
-} // namespace mathlib
+}  // namespace mathlib

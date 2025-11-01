@@ -14,10 +14,11 @@
 
 #include "config.hpp"
 
-namespace mathlib {
+namespace mathlib
+{
 
 real_t rad2deg(const real_t rad);
 
 real_t deg2rad(const real_t deg);
 
-} // namespace mathlib
+}  // namespace mathlib

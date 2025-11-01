@@ -1,23 +1,19 @@
 /*****************************************************************************************
- * @file: macros.h
+ * @file: Vector.cpp
  *
- * @brief: A collection of private macros.
+ * @brief: An empty file since the Vector class is a template class.
  *
  * @author: fakl
  * @date: October 2025
  *
  ****************************************************************************************/
 
-#pragma once
+#include "Vector.hpp"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace mathlib
+{
+}  // namespace mathlib
 
-#ifndef sq
-#define sq(x) (x * x)
-#endif
-
-#ifdef __cplusplus
-}
-#endif
+namespace std
+{
+}  // namespace std

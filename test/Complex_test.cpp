@@ -1,20 +1,23 @@
 #include "Complex.hpp"
 
 #include <complex>
+
 #include <gtest/gtest.h>
 
 using namespace mathlib;
 
 constexpr real_t TEST_EPSILON = 1e-9;
 
-TEST(ComplexTest, DefaultConstructor) {
+TEST(ComplexTest, DefaultConstructor)
+{
   const Complex z;
   const std::complex<real_t> std_z;
   EXPECT_DOUBLE_EQ(z.real(), std_z.real());
   EXPECT_DOUBLE_EQ(z.imag(), std_z.imag());
 }
 
-TEST(ComplexTest, Constructor) {
+TEST(ComplexTest, Constructor)
+{
   const Complex z1(1, 2);
   const std::complex<real_t> std_z1(1, 2);
   EXPECT_DOUBLE_EQ(z1.real(), std_z1.real());
@@ -26,7 +29,8 @@ TEST(ComplexTest, Constructor) {
   EXPECT_DOUBLE_EQ(z2.imag(), std_z2.imag());
 }
 
-TEST(ComplexTest, CopyConstructor) {
+TEST(ComplexTest, CopyConstructor)
+{
   const Complex z1(1, 2);
   const Complex z2(z1);
   const std::complex<real_t> std_z1(1, 2);
@@ -35,7 +39,8 @@ TEST(ComplexTest, CopyConstructor) {
   EXPECT_DOUBLE_EQ(z2.imag(), std_z2.imag());
 }
 
-TEST(ComplexTest, Copy) {
+TEST(ComplexTest, Copy)
+{
   const Complex z1(2, 1);
   Complex z2;
   z2 = z1;
@@ -45,21 +50,24 @@ TEST(ComplexTest, Copy) {
   EXPECT_DOUBLE_EQ(z2.imag(), std_z2.imag());
 }
 
-TEST(ComplexTest, Real) {
+TEST(ComplexTest, Real)
+{
   const Complex z(3.5, -2.1);
   const std::complex<real_t> std_z(3.5, -2.1);
   EXPECT_DOUBLE_EQ(z.real(), std_z.real());
   EXPECT_DOUBLE_EQ(real(z), std_z.real());
 }
 
-TEST(ComplexTest, Imag) {
+TEST(ComplexTest, Imag)
+{
   const Complex z(3.5, -2.1);
   const std::complex<real_t> std_z(3.5, -2.1);
   EXPECT_DOUBLE_EQ(z.imag(), std_z.imag());
   EXPECT_DOUBLE_EQ(imag(z), std_z.imag());
 }
 
-TEST(ComplexTest, Abs) {
+TEST(ComplexTest, Abs)
+{
   const Complex z1(3, 4);
   const std::complex<real_t> std_z1(3, 4);
   EXPECT_DOUBLE_EQ(abs(z1), std::abs(std_z1));
@@ -69,7 +77,8 @@ TEST(ComplexTest, Abs) {
   EXPECT_DOUBLE_EQ(abs(z2), std::abs(std_z2));
 }
 
-TEST(ComplexTest, Abs2) {
+TEST(ComplexTest, Abs2)
+{
   const Complex z1(3, 4);
   const std::complex<real_t> std_z1(3, 4);
   EXPECT_DOUBLE_EQ(abs2(z1), std::norm(std_z1));
@@ -79,7 +88,8 @@ TEST(ComplexTest, Abs2) {
   EXPECT_DOUBLE_EQ(abs2(z2), std::norm(std_z2));
 }
 
-TEST(ComplexTest, Arg) {
+TEST(ComplexTest, Arg)
+{
   const Complex z1(1, 1);
   const std::complex<real_t> std_z1(1, 1);
   EXPECT_DOUBLE_EQ(arg(z1), std::arg(std_z1));
@@ -89,7 +99,8 @@ TEST(ComplexTest, Arg) {
   EXPECT_DOUBLE_EQ(arg(z2), std::arg(std_z2));
 }
 
-TEST(ComplexTest, Conj) {
+TEST(ComplexTest, Conj)
+{
   const Complex z(2, -3);
   const std::complex<real_t> std_z(2, -3);
   const Complex result = conj(z);
@@ -98,7 +109,8 @@ TEST(ComplexTest, Conj) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, Exp) {
+TEST(ComplexTest, Exp)
+{
   const Complex z(1, 0.5);
   const std::complex<real_t> std_z(1, 0.5);
   const Complex result = exp(z);
@@ -107,7 +119,8 @@ TEST(ComplexTest, Exp) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Log) {
+TEST(ComplexTest, Log)
+{
   const Complex z(2, 1);
   const std::complex<real_t> std_z(2, 1);
   const Complex result = log(z);
@@ -116,7 +129,8 @@ TEST(ComplexTest, Log) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Sin) {
+TEST(ComplexTest, Sin)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = sin(z);
@@ -125,7 +139,8 @@ TEST(ComplexTest, Sin) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Cos) {
+TEST(ComplexTest, Cos)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = cos(z);
@@ -134,7 +149,8 @@ TEST(ComplexTest, Cos) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Tan) {
+TEST(ComplexTest, Tan)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = tan(z);
@@ -143,7 +159,8 @@ TEST(ComplexTest, Tan) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Asin) {
+TEST(ComplexTest, Asin)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = asin(z);
@@ -152,7 +169,8 @@ TEST(ComplexTest, Asin) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Acos) {
+TEST(ComplexTest, Acos)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = acos(z);
@@ -161,7 +179,8 @@ TEST(ComplexTest, Acos) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Atan) {
+TEST(ComplexTest, Atan)
+{
   const Complex z(0.5, 0.3);
   const std::complex<real_t> std_z(0.5, 0.3);
   const Complex result = atan(z);
@@ -170,7 +189,8 @@ TEST(ComplexTest, Atan) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, PowRealExponent) {
+TEST(ComplexTest, PowRealExponent)
+{
   const Complex z(4, 3);
   const real_t w = 2.5;
   const std::complex<real_t> std_z(4, 3);
@@ -180,7 +200,8 @@ TEST(ComplexTest, PowRealExponent) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, PowComplexExponent) {
+TEST(ComplexTest, PowComplexExponent)
+{
   const Complex z(4, 3);
   const Complex w(1.2, -0.7);
   const std::complex<real_t> std_z(4, 3);
@@ -191,7 +212,8 @@ TEST(ComplexTest, PowComplexExponent) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, Sqrt) {
+TEST(ComplexTest, Sqrt)
+{
   const Complex z(4, 3);
   const std::complex<real_t> std_z(4, 3);
   const Complex result = sqrt(z);
@@ -200,7 +222,8 @@ TEST(ComplexTest, Sqrt) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, AdditionComplexComplex) {
+TEST(ComplexTest, AdditionComplexComplex)
+{
   const Complex z1(1, 2);
   const Complex z2(3, 4);
   const std::complex<real_t> std_z1(1, 2);
@@ -211,7 +234,8 @@ TEST(ComplexTest, AdditionComplexComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, AdditionComplexReal) {
+TEST(ComplexTest, AdditionComplexReal)
+{
   const Complex z(1, 2);
   const real_t r = 3;
   const std::complex<real_t> std_z(1, 2);
@@ -221,7 +245,8 @@ TEST(ComplexTest, AdditionComplexReal) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, AdditionRealComplex) {
+TEST(ComplexTest, AdditionRealComplex)
+{
   const real_t r = 3;
   const Complex z(1, 2);
   const std::complex<real_t> std_z(1, 2);
@@ -231,7 +256,8 @@ TEST(ComplexTest, AdditionRealComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, SubtractionComplexComplex) {
+TEST(ComplexTest, SubtractionComplexComplex)
+{
   const Complex z1(5, 6);
   const Complex z2(1, 2);
   const std::complex<real_t> std_z1(5, 6);
@@ -242,7 +268,8 @@ TEST(ComplexTest, SubtractionComplexComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, SubtractionComplexReal) {
+TEST(ComplexTest, SubtractionComplexReal)
+{
   const Complex z(5, 2);
   const real_t r = 3;
   const std::complex<real_t> std_z(5, 2);
@@ -252,7 +279,8 @@ TEST(ComplexTest, SubtractionComplexReal) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, SubtractionRealComplex) {
+TEST(ComplexTest, SubtractionRealComplex)
+{
   const real_t r = 5;
   const Complex z(1, 2);
   const std::complex<real_t> std_z(1, 2);
@@ -262,7 +290,8 @@ TEST(ComplexTest, SubtractionRealComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, MultiplicationComplexComplex) {
+TEST(ComplexTest, MultiplicationComplexComplex)
+{
   const Complex z1(1, 2);
   const Complex z2(3, 4);
   const std::complex<real_t> std_z1(1, 2);
@@ -273,7 +302,8 @@ TEST(ComplexTest, MultiplicationComplexComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, MultiplicationComplexReal) {
+TEST(ComplexTest, MultiplicationComplexReal)
+{
   const Complex z(1, 2);
   const real_t r = 3;
   const std::complex<real_t> std_z(1, 2);
@@ -283,7 +313,8 @@ TEST(ComplexTest, MultiplicationComplexReal) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, MultiplicationRealComplex) {
+TEST(ComplexTest, MultiplicationRealComplex)
+{
   const real_t r = 3;
   const Complex z(1, 2);
   const std::complex<real_t> std_z(1, 2);
@@ -293,7 +324,8 @@ TEST(ComplexTest, MultiplicationRealComplex) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, DivisionComplexComplex) {
+TEST(ComplexTest, DivisionComplexComplex)
+{
   const Complex z1(10, 5);
   const Complex z2(2, 1);
   const std::complex<real_t> std_z1(10, 5);
@@ -304,7 +336,8 @@ TEST(ComplexTest, DivisionComplexComplex) {
   EXPECT_NEAR(result.imag(), std_result.imag(), TEST_EPSILON);
 }
 
-TEST(ComplexTest, DivisionComplexReal) {
+TEST(ComplexTest, DivisionComplexReal)
+{
   const Complex z(6, 4);
   const real_t r = 2;
   const std::complex<real_t> std_z(6, 4);
@@ -314,7 +347,8 @@ TEST(ComplexTest, DivisionComplexReal) {
   EXPECT_DOUBLE_EQ(result.imag(), std_result.imag());
 }
 
-TEST(ComplexTest, DivisionRealComplex) {
+TEST(ComplexTest, DivisionRealComplex)
+{
   const real_t r = 6;
   const Complex z(2, 1);
   const std::complex<real_t> std_z(2, 1);

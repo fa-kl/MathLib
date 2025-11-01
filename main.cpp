@@ -10,23 +10,18 @@
  *
  ****************************************************************************************/
 
-#include "mathlib.hpp"
 #include <iostream>
+
+#include "mathlib.hpp"
 
 using namespace mathlib;
 
 /*****************************************************************************************
  *  Main Function
  ****************************************************************************************/
-int main(void) {
-
+int main(void)
+{
   /* TODO: try it out yourself! */
-
-  Vector2D vec2(1, 2);
-  Vector3D vec3(1, 2, 3);
-
-  std::cout << vec2 << std::endl;
-  std::cout << vec3 << std::endl;
 
   return 0;
 }

@@ -13,11 +13,12 @@
 #pragma once
 
 #include "Complex.hpp"
+
 #include "DivByZeroError.hpp"
 #include "IndexOutOfRangeError.hpp"
 #include "MathLibError.hpp"
-#include "Vector2D.hpp"
-#include "Vector3D.hpp"
+#include "Matrix.hpp"
+#include "Vector.hpp"
 #include "compare.hpp"
 #include "config.hpp"
 #include "conversion.hpp"

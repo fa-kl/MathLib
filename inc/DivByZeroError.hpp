@@ -10,20 +10,21 @@
 
 #pragma once
 
-#include "MathLibError.hpp"
 #include <exception>
 #include <string>
 #include <utility>
 
-namespace mathlib {
+#include "MathLibError.hpp"
 
-class DivByZeroError : public MathLibError {
+namespace mathlib
+{
 
+class DivByZeroError : public MathLibError
+{
 public:
   explicit DivByZeroError() : DivByZeroError("A division by zero occured.") {}
 
-  explicit DivByZeroError(std::string msg)
-      : MathLibError("DivByZeroError", std::move(msg)) {}
+  explicit DivByZeroError(std::string msg) : MathLibError("DivByZeroError", std::move(msg)) {}
 };
 
-} // namespace mathlib
+}  // namespace mathlib
