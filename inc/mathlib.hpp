@@ -15,6 +15,7 @@
 #include "Complex.hpp"
 
 #include "DivByZeroError.hpp"
+#include "IncompatibleSizeError.hpp"
 #include "IndexOutOfRangeError.hpp"
 #include "MathLibError.hpp"
 #include "Matrix.hpp"
@@ -22,3 +23,4 @@
 #include "compare.hpp"
 #include "config.hpp"
 #include "conversion.hpp"
+#include "rounding.hpp"

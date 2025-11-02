@@ -1,5 +1,9 @@
 # MathLib
-A custom C++ library for mathematics - currently under development. 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/fa-kl/MathLib/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![C++](https://img.shields.io/badge/C++-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+
+A modern C++23 library for mathematical operations including complex numbers, vectors, matrices, and linear algebra. 
 
 ## Features
   - Floating-point comparison
@@ -135,20 +139,155 @@ A custom C++ library for mathematics - currently under development.
   - Conversion to ```std::string``` and printing via ```<iostream>```
   - and more ...
 
-## Build Instructions
-### Ubuntu 24.04.3 LTS
-Assuming a suitable compiler is installed:
-```shell
+## Requirements
+- **C++23** compatible compiler:
+  - GCC 12 or higher
+  - Clang 16 or higher
+  - MSVC 2022 or higher (Visual Studio 2022)
+- **CMake 3.20** or higher
+
+## Installation
+
+### Option 1: Using CMake (Recommended)
+
+#### 1. Clone the repository
+```bash
+git clone https://github.com/fa-kl/MathLib.git
+cd MathLib
+```
+
+#### 2. Build the library
+```bash
 mkdir build
 cd build
 cmake ..
 make
 ```
-or using the provided shell scripts, i.e. ```build.sh``` and ```run.sh```.
+
+Or use the provided shell scripts:
+```bash
+./build.sh
+```
+
+#### 3. Link to your project
+In your project's `CMakeLists.txt`:
+```cmake
+# Add MathLib as subdirectory
+add_subdirectory(path/to/MathLib)
+
+# Link against your executable/library
+target_link_libraries(your_target PRIVATE MathLib)
+```
+
+### Option 2: Manual Integration
+
+Simply copy the `inc/` and `src/` directories into your project and include the headers:
+
+```cpp
+#include "mathlib.hpp"  // Main header that includes all components
+```
+
+### Option 3: Git Submodule
+
+Add MathLib as a submodule to your project:
+```bash
+git submodule add https://github.com/fa-kl/MathLib.git external/MathLib
+git submodule update --init --recursive
+```
+
+Then in your `CMakeLists.txt`:
+```cmake
+add_subdirectory(external/MathLib)
+target_link_libraries(your_target PRIVATE MathLib)
+```
+
+## Quick Start Example
+
+```cpp
+#include "mathlib.hpp"
+using namespace mathlib;
+
+int main() {
+    // Complex numbers
+    Complex z1(3.0, 4.0);
+    Complex z2 = exp(z1);
+    
+    // Vectors
+    Vector<double> v1 = {1.0, 2.0, 3.0};
+    Vector<double> v2 = {4.0, 5.0, 6.0};
+    double dot = v1 * v2;  // Dot product
+    
+    // Matrices
+    Matrix<double> A = {{1.0, 2.0}, 
+                        {3.0, 4.0}};
+    Matrix<double> B = A.transpose();
+    auto qr = mathlib::qr(A);  // QR decomposition
+    
+    return 0;
+}
+```
+
+## Running Tests
+
+```bash
+cd build
+ctest
+# or
+./MathLibTests
+```
+
+## Running with Coverage
+
+```bash
+mkdir build
+cd build
+cmake -DENABLE_COVERAGE=ON ..
+make
+make coverage
+# Open coverage_html/index.html in browser
+```
+
+Or use the provided script:
+```bash
+./coverage.sh
+```
 
 ## Documentation
-To be done... 
-At the moment only doc-strings exist.
 
-## Contribute
-This is more a fun project to improve my C++ skills. If you want to improve your C++ skills or have any tipps feel free to contact me! :)
+Full API documentation is available at: **[https://fa-kl.github.io/MathLib](https://fa-kl.github.io/MathLib)**
+
+The documentation is generated from the source code using Doxygen. To generate it locally:
+```bash
+doxygen Doxyfile
+```
+
+## Project Structure
+
+```
+MathLib/
+├── inc/            # Header files
+│   ├── mathlib.hpp # Main include file
+│   ├── Complex.hpp
+│   ├── Vector.hpp
+│   ├── Matrix.hpp
+│   └── ...
+├── src/            # Implementation files
+├── test/           # Unit tests (GoogleTest)
+├── build/          # Build directory (generated)
+└── CMakeLists.txt  # CMake configuration
+```
+
+## Contributing
+
+This is primarily a learning project to improve C++ skills. If you want to improve your C++ skills or have any tips, feel free to:
+- Open an issue
+- Submit a pull request
+- Contact me for discussions
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
