@@ -17,7 +17,7 @@
 namespace mathlib
 {
 
-/// @brief Compare to real (floating point) values for equality
+/// @brief Compare two real scalars for equality
 /// @param value1 First real value
 /// @param value2 Second real value
 /// @param epsilon Comparison tolerance

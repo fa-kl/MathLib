@@ -73,6 +73,12 @@ public:
     std::copy(values.begin(), values.end(), m_data.get());
   }
 
+  Vector(const Matrix<data_t>& mat) : m_data(std::make_unique<data_t[]>(mat.length())), m_size(mat.length(), 1) {
+    for (size_t i = 0; i < mat.length(); ++i) {
+      m_data[i] = mat[i];
+    }
+  }
+
   Vector(const Vector& other)
       : m_data(other.length() > 0 ? std::make_unique<data_t[]>(other.length()) : nullptr), m_size(other.m_size)
   {
@@ -139,28 +145,34 @@ public:
     throw IndexOutOfRangeError(i);
   }
 
-  data_t& operator()(const index_t i)
+  template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
+  data_t& operator()(const int_t i)
   {
     if (i == 0) {
       throw IndexOutOfRangeError("0 is an invalid index for 1-based access methods");
     }
-    if (static_cast<size_t>(std::abs(i)) <= length()) {
-      return i > 0 ? m_data[static_cast<size_t>(i - 1)]
-                   : m_data[static_cast<size_t>(static_cast<index_t>(length()) + i)];
+    index_t idx_val = static_cast<index_t>(i);
+    index_t len = static_cast<index_t>(length());
+    size_t idx = idx_val > 0 ? static_cast<size_t>(idx_val - 1) : static_cast<size_t>(len + idx_val);
+    if (idx >= length()) {
+      throw IndexOutOfRangeError();
     }
-    throw IndexOutOfRangeError(i);
+    return m_data[idx];
   }
 
-  const data_t& operator()(const index_t i) const
+  template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
+  const data_t& operator()(const int_t i) const
   {
     if (i == 0) {
       throw IndexOutOfRangeError("0 is an invalid index for 1-based access methods");
     }
-    if (static_cast<size_t>(std::abs(i)) <= length()) {
-      return i > 0 ? m_data[static_cast<size_t>(i - 1)]
-                   : m_data[static_cast<size_t>(static_cast<index_t>(length()) + i)];
+    index_t idx_val = static_cast<index_t>(i);
+    index_t len = static_cast<index_t>(length());
+    size_t idx = idx_val > 0 ? static_cast<size_t>(idx_val - 1) : static_cast<size_t>(len + idx_val);
+    if (idx >= length()) {
+      throw IndexOutOfRangeError();
     }
-    throw IndexOutOfRangeError(i);
+    return m_data[idx];
   }
 
   Vector operator+() const { return Vector(*this); }
@@ -540,10 +552,47 @@ Matrix<data_t> transpose(const Vector<data_t>& vec)
   return result;
 }
 
-/*
-  TODO: cat, hcat, vcat, reshape, vec[i] extension, vectorize
-  maybe also everything in Matrix!?
-*/
+template <typename data_t>
+Matrix<data_t> hcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
+{
+  if (lhs.length() != rhs.length()) {
+    throw IncompatibleSizeError("Vectors must have the same length for horizontal concatenation");
+  }
+  size_t rows = lhs.length();
+  Matrix<data_t> result(rows, 2);
+
+  // Copy lhs into first column using 1-based indexing
+  for (index_t i = 1; i <= static_cast<index_t>(rows); ++i) {
+    result(i, 1) = lhs(i);
+  }
+
+  // Copy rhs into second column using 1-based indexing
+  for (index_t i = 1; i <= static_cast<index_t>(rows); ++i) {
+    result(i, 2) = rhs(i);
+  }
+
+  return result;
+}
+
+template <typename data_t>
+Vector<data_t> vcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
+{
+  size_t lhs_len = lhs.length();
+  size_t rhs_len = rhs.length();
+  Vector<data_t> result(lhs_len + rhs_len);
+
+  // Copy lhs elements using 1-based indexing
+  for (index_t i = 1; i <= static_cast<index_t>(lhs_len); ++i) {
+    result(i) = lhs(i);
+  }
+
+  // Copy rhs elements using 1-based indexing
+  for (index_t i = 1; i <= static_cast<index_t>(rhs_len); ++i) {
+    result(static_cast<index_t>(lhs_len) + i) = rhs(i);
+  }
+
+  return result;
+}
 
 template <typename data_t>
 real_t norm(const Vector<data_t>& vec, real_t p = real_t(2))
@@ -791,6 +840,21 @@ auto elmul(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std:
 }
 
 template <typename T1, typename T2>
+auto eldiv(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
+{
+  if (lhs.length() != rhs.length()) {
+    throw IncompatibleSizeError();
+  }
+  using result_t = std::common_type_t<T1, T2>;
+  size_t len = lhs.length();
+  Vector<result_t> result(len);
+  for (size_t i = 0; i < len; ++i) {
+    result[i] = static_cast<result_t>(lhs[i]) / static_cast<result_t>(rhs[i]);
+  }
+  return result;
+}
+
+template <typename T1, typename T2>
 real_t dot(const Vector<T1>& lhs, const Vector<T2>& rhs)
 {
   if (lhs.length() != rhs.length()) {
@@ -819,9 +883,24 @@ auto cross(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std:
                                static_cast<result_t>(lhs[1]) * static_cast<result_t>(rhs[0])});
 }
 
-/*
-  TODO: outer prod, hadamard_product
-*/
+template <typename T1, typename T2>
+auto outer(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Matrix<decltype(std::declval<T1>() + std::declval<T2>())>
+{
+  using result_t = std::common_type_t<T1, T2>;
+  const size_t m = lhs.length();
+  const size_t n = rhs.length();
+
+  Matrix<result_t> result(m, n);
+
+  for (size_t i = 0; i < m; ++i) {
+    for (size_t col = 0; col < n; ++col) {
+      result(static_cast<index_t>(i + 1), static_cast<index_t>(col + 1)) =
+          static_cast<result_t>(lhs[i]) * static_cast<result_t>(rhs[col]);
+    }
+  }
+
+  return result;
+}
 
 template <typename data_t>
 data_t max(const Vector<data_t>& vec)
@@ -864,9 +943,6 @@ real_t var(const Vector<data_t>& vec)
   Vector<real_t> v = abs(vec - mean(vec));
   return factor * sum(elmul(v, v));
 }
-
-// TODO: cov(const Vector<data_t>& vec)
-// TODO: corr(const Vector<data_t>& vec)
 
 inline bool all(const Vector<bool>& vec)
 {

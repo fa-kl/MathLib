@@ -240,6 +240,22 @@ TEST(MatrixTest, EyeConstructor)
   EXPECT_DOUBLE_EQ(mat(3, 3), 1.0);
 }
 
+TEST(MatrixTest, DiagFromValues)
+{
+  Matrix<real_t> mat = diag({1.0, 2.0, 3.0});
+  EXPECT_EQ(mat.rows(), 3);
+  EXPECT_EQ(mat.cols(), 3);
+  EXPECT_DOUBLE_EQ(mat(1, 1), 1.0);
+  EXPECT_DOUBLE_EQ(mat(1, 2), 0.0);
+  EXPECT_DOUBLE_EQ(mat(1, 3), 0.0);
+  EXPECT_DOUBLE_EQ(mat(2, 1), 0.0);
+  EXPECT_DOUBLE_EQ(mat(2, 2), 2.0);
+  EXPECT_DOUBLE_EQ(mat(2, 3), 0.0);
+  EXPECT_DOUBLE_EQ(mat(3, 1), 0.0);
+  EXPECT_DOUBLE_EQ(mat(3, 2), 0.0);
+  EXPECT_DOUBLE_EQ(mat(3, 3), 3.0);
+}
+
 TEST(MatrixTest, DiagFromVector)
 {
   Vector<real_t> vec = {1.0, 2.0, 3.0};
@@ -1432,4 +1448,386 @@ TEST(MatrixTest, IntScalarRealMatrixOperations)
   auto result2 = mat * 2;
   EXPECT_DOUBLE_EQ(result2(1, 1), 3.0);
   EXPECT_DOUBLE_EQ(result2(2, 2), 9.0);
+}
+
+TEST(MatrixTest, MeanScalar)
+{
+  // Test mean of entire matrix
+  Matrix<real_t> mat = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
+  real_t m = mean(mat);
+  EXPECT_DOUBLE_EQ(m, 3.5);  // (1+2+3+4+5+6)/6 = 21/6 = 3.5
+
+  // Test with single element
+  Matrix<real_t> single = {{5.0}};
+  EXPECT_DOUBLE_EQ(mean(single), 5.0);
+
+  // Test with negative values
+  Matrix<real_t> neg = {{-2.0, 0.0}, {2.0, 4.0}};
+  EXPECT_DOUBLE_EQ(mean(neg), 1.0);  // (-2+0+2+4)/4 = 4/4 = 1.0
+}
+
+TEST(MatrixTest, MeanAlongDimensions)
+{
+  Matrix<real_t> mat = {{1.0, 3.0}, {2.0, 4.0}, {3.0, 5.0}};  // 3x2 matrix
+
+  // Mean along dimension 1 (down columns) - result: 1 x cols
+  Matrix<real_t> mean_dim1 = mean(mat, 1);
+  EXPECT_EQ(mean_dim1.rows(), 1);
+  EXPECT_EQ(mean_dim1.cols(), 2);
+  EXPECT_DOUBLE_EQ(mean_dim1(1, 1), 2.0);  // (1+2+3)/3 = 2.0
+  EXPECT_DOUBLE_EQ(mean_dim1(1, 2), 4.0);  // (3+4+5)/3 = 4.0
+
+  // Mean along dimension 2 (across rows) - result: rows x 1
+  Matrix<real_t> mean_dim2 = mean(mat, 2);
+  EXPECT_EQ(mean_dim2.rows(), 3);
+  EXPECT_EQ(mean_dim2.cols(), 1);
+  EXPECT_DOUBLE_EQ(mean_dim2(1, 1), 2.0);  // (1+3)/2 = 2.0
+  EXPECT_DOUBLE_EQ(mean_dim2(2, 1), 3.0);  // (2+4)/2 = 3.0
+  EXPECT_DOUBLE_EQ(mean_dim2(3, 1), 4.0);  // (3+5)/2 = 4.0
+
+  // Test with larger matrix
+  Matrix<real_t> mat2 = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};  // 2x3
+  Matrix<real_t> mean2_dim1 = mean(mat2, 1);
+  EXPECT_EQ(mean2_dim1.rows(), 1);
+  EXPECT_EQ(mean2_dim1.cols(), 3);
+  EXPECT_DOUBLE_EQ(mean2_dim1(1, 1), 2.5);  // (1+4)/2 = 2.5
+  EXPECT_DOUBLE_EQ(mean2_dim1(1, 2), 3.5);  // (2+5)/2 = 3.5
+  EXPECT_DOUBLE_EQ(mean2_dim1(1, 3), 4.5);  // (3+6)/2 = 4.5
+
+  // Test invalid dimension
+  EXPECT_THROW(mean(mat, 3), MathLibError);
+  EXPECT_THROW(mean(mat, 0), MathLibError);
+}
+
+TEST(MatrixTest, VarianceScalar)
+{
+  // Test variance of entire matrix: var = mean((x - mean(x))^2)
+  Matrix<real_t> mat = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
+  real_t v = var(mat);
+  // mean = 3.5
+  // variance = ((1-3.5)^2 + (4-3.5)^2 + (2-3.5)^2 + (5-3.5)^2 + (3-3.5)^2 + (6-3.5)^2) / 6
+  //          = (6.25 + 0.25 + 2.25 + 2.25 + 0.25 + 6.25) / 6
+  //          = 17.5 / 6 = 2.9166...
+  EXPECT_NEAR(v, 17.5 / 6.0, 1e-10);
+
+  // Test with zero variance
+  Matrix<real_t> constant = {{5.0, 5.0}, {5.0, 5.0}};
+  EXPECT_DOUBLE_EQ(var(constant), 0.0);
+
+  // Test with single element (variance = 0)
+  Matrix<real_t> single = {{42.0}};
+  EXPECT_DOUBLE_EQ(var(single), 0.0);
+
+  // Test empty matrix throws error
+  Matrix<real_t> empty;
+  EXPECT_THROW(var(empty), MathLibError);
+}
+
+TEST(MatrixTest, VarianceAlongDimensions)
+{
+  // Simple 2x2 matrix for easy verification
+  Matrix<real_t> mat = {{1.0, 3.0}, {5.0, 7.0}};  // 2x2 matrix
+
+  // Variance along dimension 1 (down columns) - result: 1 x cols
+  Matrix<real_t> var_dim1 = var(mat, 1);
+  EXPECT_EQ(var_dim1.rows(), 1);
+  EXPECT_EQ(var_dim1.cols(), 2);
+
+  // Column 1: mean = (1+5)/2 = 3, var = ((1-3)^2 + (5-3)^2)/2 = (4+4)/2 = 4
+  EXPECT_DOUBLE_EQ(var_dim1(1, 1), 4.0);
+  // Column 2: mean = (3+7)/2 = 5, var = ((3-5)^2 + (7-5)^2)/2 = (4+4)/2 = 4
+  EXPECT_DOUBLE_EQ(var_dim1(1, 2), 4.0);
+
+  // Variance along dimension 2 (across rows) - result: rows x 1
+  Matrix<real_t> var_dim2 = var(mat, 2);
+  EXPECT_EQ(var_dim2.rows(), 2);
+  EXPECT_EQ(var_dim2.cols(), 1);
+
+  // Row 1: mean = (1+3)/2 = 2, var = ((1-2)^2 + (3-2)^2)/2 = (1+1)/2 = 1
+  EXPECT_DOUBLE_EQ(var_dim2(1, 1), 1.0);
+  // Row 2: mean = (5+7)/2 = 6, var = ((5-6)^2 + (7-6)^2)/2 = (1+1)/2 = 1
+  EXPECT_DOUBLE_EQ(var_dim2(2, 1), 1.0);
+
+  // Test with a 3x3 matrix
+  Matrix<real_t> mat2 = {{2.0, 4.0, 6.0}, {8.0, 10.0, 12.0}, {14.0, 16.0, 18.0}};
+  Matrix<real_t> var2_dim1 = var(mat2, 1);
+  EXPECT_EQ(var2_dim1.rows(), 1);
+  EXPECT_EQ(var2_dim1.cols(), 3);
+
+  // Each column has mean of middle value, variance should be same for all
+  // Column 1: [2, 8, 14], mean = 8, var = ((2-8)^2 + (8-8)^2 + (14-8)^2)/3 = (36+0+36)/3 = 24
+  EXPECT_DOUBLE_EQ(var2_dim1(1, 1), 24.0);
+  EXPECT_DOUBLE_EQ(var2_dim1(1, 2), 24.0);
+  EXPECT_DOUBLE_EQ(var2_dim1(1, 3), 24.0);
+
+  // Test invalid dimension
+  EXPECT_THROW(var(mat, 3), MathLibError);
+  EXPECT_THROW(var(mat, 0), MathLibError);
+}
+
+TEST(MatrixTest, StandardDeviationScalar)
+{
+  // Test std = sqrt(var)
+  Matrix<real_t> mat = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
+  real_t s = mathlib::std(mat);
+  real_t v = var(mat);
+
+  EXPECT_DOUBLE_EQ(s, std::sqrt(v));
+  EXPECT_NEAR(s, std::sqrt(17.5 / 6.0), 1e-10);
+
+  // Test with zero std
+  Matrix<real_t> constant = {{3.0, 3.0}, {3.0, 3.0}};
+  EXPECT_DOUBLE_EQ(mathlib::std(constant), 0.0);
+
+  // Test with known values
+  // Matrix with mean = 2.0
+  // var = ((0-2)^2 + (2-2)^2 + (2-2)^2 + (4-2)^2)/4 = (4+0+0+4)/4 = 2.0
+  // std = sqrt(2.0)
+  Matrix<real_t> mat2 = {{0.0, 2.0}, {2.0, 4.0}};
+  EXPECT_DOUBLE_EQ(mathlib::std(mat2), std::sqrt(2.0));
+}
+
+TEST(MatrixTest, StandardDeviationAlongDimensions)
+{
+  Matrix<real_t> mat = {{1.0, 3.0}, {5.0, 7.0}};  // 2x2 matrix
+
+  // Std along dimension 1 - result: 1 x cols
+  Matrix<real_t> std_dim1 = mathlib::std(mat, 1);
+  EXPECT_EQ(std_dim1.rows(), 1);
+  EXPECT_EQ(std_dim1.cols(), 2);
+
+  // Should equal sqrt(var(..., 1))
+  Matrix<real_t> var_dim1 = var(mat, 1);
+  EXPECT_DOUBLE_EQ(std_dim1(1, 1), std::sqrt(var_dim1(1, 1)));
+  EXPECT_DOUBLE_EQ(std_dim1(1, 2), std::sqrt(var_dim1(1, 2)));
+  EXPECT_DOUBLE_EQ(std_dim1(1, 1), 2.0);  // sqrt(4)
+  EXPECT_DOUBLE_EQ(std_dim1(1, 2), 2.0);  // sqrt(4)
+
+  // Std along dimension 2 - result: rows x 1
+  Matrix<real_t> std_dim2 = mathlib::std(mat, 2);
+  EXPECT_EQ(std_dim2.rows(), 2);
+  EXPECT_EQ(std_dim2.cols(), 1);
+
+  Matrix<real_t> var_dim2 = var(mat, 2);
+  EXPECT_DOUBLE_EQ(std_dim2(1, 1), std::sqrt(var_dim2(1, 1)));
+  EXPECT_DOUBLE_EQ(std_dim2(2, 1), std::sqrt(var_dim2(2, 1)));
+  EXPECT_DOUBLE_EQ(std_dim2(1, 1), 1.0);  // sqrt(1)
+  EXPECT_DOUBLE_EQ(std_dim2(2, 1), 1.0);  // sqrt(1)
+
+  // Test with larger matrix
+  Matrix<real_t> mat2 = {{1.0, 4.0, 7.0}, {2.0, 5.0, 8.0}, {3.0, 6.0, 9.0}};
+  Matrix<real_t> std2_dim1 = mathlib::std(mat2, 1);
+  Matrix<real_t> var2_dim1 = var(mat2, 1);
+
+  for (index_t c = 1; c <= 3; ++c) {
+    EXPECT_DOUBLE_EQ(std2_dim1(1, c), std::sqrt(var2_dim1(1, c)));
+  }
+
+  // Test invalid dimension
+  EXPECT_THROW(mathlib::std(mat, 3), MathLibError);
+  EXPECT_THROW(mathlib::std(mat, 0), MathLibError);
+}
+
+TEST(MatrixTest, StatisticsEdgeCases)
+{
+  // Single row matrix
+  Matrix<real_t> row = {{1.0, 2.0, 3.0, 4.0, 5.0}};
+  EXPECT_DOUBLE_EQ(mean(row), 3.0);
+
+  Matrix<real_t> mean_row_dim1 = mean(row, 1);
+  EXPECT_EQ(mean_row_dim1.rows(), 1);
+  EXPECT_EQ(mean_row_dim1.cols(), 5);
+  for (index_t i = 1; i <= 5; ++i) {
+    EXPECT_DOUBLE_EQ(mean_row_dim1(1, i), static_cast<real_t>(i));
+  }
+
+  // Single column matrix
+  Matrix<real_t> col = {{1.0}, {2.0}, {3.0}, {4.0}, {5.0}};
+  EXPECT_DOUBLE_EQ(mean(col), 3.0);
+
+  Matrix<real_t> mean_col_dim2 = mean(col, 2);
+  EXPECT_EQ(mean_col_dim2.rows(), 5);
+  EXPECT_EQ(mean_col_dim2.cols(), 1);
+  for (index_t i = 1; i <= 5; ++i) {
+    EXPECT_DOUBLE_EQ(mean_col_dim2(i, 1), static_cast<real_t>(i));
+  }
+
+  // Integer matrix
+  Matrix<int64_t> int_mat = {{1, 2}, {3, 4}};
+  EXPECT_DOUBLE_EQ(mean(int_mat), 2.5);
+  EXPECT_NEAR(var(int_mat), 1.25, 1e-10);  // var = ((1-2.5)^2 + (2-2.5)^2 + (3-2.5)^2 + (4-2.5)^2)/4
+}
+
+TEST(MatrixTest, EigenvaluesDiagonal)
+{
+  // Diagonal matrix - eigenvalues are the diagonal elements
+  Matrix<real_t> diag_mat = diag({3.0, 5.0, 2.0});
+  Vector<real_t> eigenvalues = eigvals(diag_mat);
+
+  EXPECT_EQ(eigenvalues.length(), 3);
+
+  // Sort eigenvalues for comparison (order may vary)
+  std::vector<real_t> eig_sorted(eigenvalues.length());
+  for (size_t i = 0; i < eigenvalues.length(); ++i) {
+    eig_sorted[i] = eigenvalues[i];
+  }
+  std::sort(eig_sorted.begin(), eig_sorted.end());
+
+  EXPECT_NEAR(eig_sorted[0], 2.0, 1e-6);
+  EXPECT_NEAR(eig_sorted[1], 3.0, 1e-6);
+  EXPECT_NEAR(eig_sorted[2], 5.0, 1e-6);
+}
+
+TEST(MatrixTest, EigenvaluesSymmetric2x2)
+{
+  // Symmetric 2x2 matrix with known eigenvalues
+  // A = [2, 1; 1, 2] has eigenvalues 3 and 1
+  Matrix<real_t> A = {{2.0, 1.0}, {1.0, 2.0}};
+  Vector<real_t> eigenvalues = eigvals(A);
+
+  EXPECT_EQ(eigenvalues.length(), 2);
+
+  std::vector<real_t> eig_sorted(2);
+  eig_sorted[0] = eigenvalues[0];
+  eig_sorted[1] = eigenvalues[1];
+  std::sort(eig_sorted.begin(), eig_sorted.end());
+
+  EXPECT_NEAR(eig_sorted[0], 1.0, 1e-6);
+  EXPECT_NEAR(eig_sorted[1], 3.0, 1e-6);
+}
+
+TEST(MatrixTest, EigenvaluesIdentity)
+{
+  // Identity matrix - all eigenvalues are 1
+  Matrix<real_t> I = eye<real_t>(4);
+  Vector<real_t> eigenvalues = eigvals(I);
+
+  EXPECT_EQ(eigenvalues.length(), 4);
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_NEAR(eigenvalues[i], 1.0, 1e-6);
+  }
+}
+
+TEST(MatrixTest, EigenDecompositionDiagonal)
+{
+  // Diagonal matrix - eigenvectors should be standard basis
+  Matrix<real_t> D = diag({4.0, 2.0, 6.0});
+  EigenDecomposition result = eigdecomp(D);
+
+  EXPECT_EQ(result.V.rows(), 3);
+  EXPECT_EQ(result.V.cols(), 3);
+  EXPECT_EQ(result.D.rows(), 3);
+  EXPECT_EQ(result.D.cols(), 3);
+
+  // Verify that D is diagonal
+  for (size_t i = 0; i < 3; ++i) {
+    for (size_t j = 0; j < 3; ++j) {
+      if (i != j) {
+        EXPECT_NEAR(result.D[j * 3 + i], 0.0, 1e-6);
+      }
+    }
+  }
+
+  // Verify V is orthogonal (V^T * V = I)
+  Matrix<real_t> VtV = transpose(result.V) * result.V;
+  Matrix<real_t> I = eye<real_t>(3);
+  for (size_t i = 0; i < 9; ++i) {
+    EXPECT_NEAR(VtV[i], I[i], 1e-6);
+  }
+}
+
+TEST(MatrixTest, EigenDecompositionSymmetric)
+{
+  // Symmetric matrix A = [4, 1; 1, 4]
+  // Eigenvalues: 5, 3
+  // Eigenvectors: [1/sqrt(2), 1/sqrt(2)]^T, [1/sqrt(2), -1/sqrt(2)]^T
+  Matrix<real_t> A = {{4.0, 1.0}, {1.0, 4.0}};
+  EigenDecomposition result = eigdecomp(A);
+
+  EXPECT_EQ(result.V.rows(), 2);
+  EXPECT_EQ(result.V.cols(), 2);
+
+  // Verify eigendecomposition: A = V * D * V^T (for symmetric matrices)
+  Matrix<real_t> reconstructed = result.V * result.D * transpose(result.V);
+
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_NEAR(reconstructed[i], A[i], 1e-5);
+  }
+
+  // Check eigenvalues
+  std::vector<real_t> eigenvalues(2);
+  eigenvalues[0] = result.D[0];
+  eigenvalues[1] = result.D[3];
+  std::sort(eigenvalues.begin(), eigenvalues.end());
+
+  EXPECT_NEAR(eigenvalues[0], 3.0, 1e-6);
+  EXPECT_NEAR(eigenvalues[1], 5.0, 1e-6);
+}
+
+TEST(MatrixTest, EigFunction)
+{
+  // Test the eig() function which returns values and vectors separately
+  Matrix<real_t> A = {{3.0, 1.0}, {1.0, 3.0}};
+  EigenResult result = eig(A);
+
+  EXPECT_EQ(result.values.length(), 2);
+  EXPECT_EQ(result.vectors.size(), 2);
+
+  // Check that each eigenvector has correct length
+  for (size_t i = 0; i < 2; ++i) {
+    EXPECT_EQ(result.vectors[i].length(), 2);
+  }
+
+  // Verify Av = λv for each eigenpair
+  for (size_t i = 0; i < 2; ++i) {
+    Vector<real_t> Av = A * result.vectors[i];
+    Vector<real_t> lambda_v = result.values[i] * result.vectors[i];
+
+    for (size_t j = 0; j < 2; ++j) {
+      EXPECT_NEAR(Av[j], lambda_v[j], 1e-5);
+    }
+  }
+
+  // Check eigenvalues (should be 4 and 2)
+  std::vector<real_t> eig_sorted(2);
+  eig_sorted[0] = result.values[0];
+  eig_sorted[1] = result.values[1];
+  std::sort(eig_sorted.begin(), eig_sorted.end());
+
+  EXPECT_NEAR(eig_sorted[0], 2.0, 1e-6);
+  EXPECT_NEAR(eig_sorted[1], 4.0, 1e-6);
+}
+
+TEST(MatrixTest, EigenvaluesLargerMatrix)
+{
+  // Test with 3x3 symmetric matrix
+  Matrix<real_t> A = {{6.0, 2.0, 1.0}, {2.0, 3.0, 1.0}, {1.0, 1.0, 1.0}};
+
+  Vector<real_t> eigenvalues = eigvals(A);
+  EXPECT_EQ(eigenvalues.length(), 3);
+
+  // Verify trace = sum of eigenvalues
+  real_t trace_A = trace(A);  // 6 + 3 + 1 = 10
+  real_t sum_eigenvalues = sum(Vector<real_t>(eigenvalues));
+  EXPECT_NEAR(sum_eigenvalues, trace_A, 1e-5);
+}
+
+TEST(MatrixTest, EigenvaluesEdgeCases)
+{
+  // Empty matrix
+  Matrix<real_t> empty(0, 0);
+  Vector<real_t> eig_empty = eigvals(empty);
+  EXPECT_EQ(eig_empty.length(), 0);
+
+  // 1x1 matrix
+  Matrix<real_t> single = {{7.0}};
+  Vector<real_t> eig_single = eigvals(single);
+  EXPECT_EQ(eig_single.length(), 1);
+  EXPECT_NEAR(eig_single[0], 7.0, 1e-10);
+
+  // Non-square matrix should throw
+  Matrix<real_t> non_square = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
+  EXPECT_THROW(eigvals(non_square), MathLibError);
+  EXPECT_THROW(eigdecomp(non_square), MathLibError);
+  EXPECT_THROW(eig(non_square), MathLibError);
 }

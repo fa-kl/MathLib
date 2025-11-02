@@ -61,6 +61,81 @@ TEST(VectorTest, InitializerListConstructor)
   EXPECT_EQ(vec3[4], 5);
 }
 
+TEST(VectorTest, MatrixConstructor)
+{
+  Matrix<real_t> col_mat(3, 1);
+  col_mat(1, 1) = 1.0;
+  col_mat(2, 1) = 2.0;
+  col_mat(3, 1) = 3.0;
+
+  Vector<real_t> vec_from_col(col_mat);
+  EXPECT_EQ(vec_from_col.length(), 3);
+  EXPECT_DOUBLE_EQ(vec_from_col[0], 1.0);
+  EXPECT_DOUBLE_EQ(vec_from_col[1], 2.0);
+  EXPECT_DOUBLE_EQ(vec_from_col[2], 3.0);
+  EXPECT_DOUBLE_EQ(vec_from_col(1), 1.0);
+  EXPECT_DOUBLE_EQ(vec_from_col(2), 2.0);
+  EXPECT_DOUBLE_EQ(vec_from_col(3), 3.0);
+
+  Matrix<real_t> row_mat(1, 3);
+  row_mat(1, 1) = 4.0;
+  row_mat(1, 2) = 5.0;
+  row_mat(1, 3) = 6.0;
+
+  Vector<real_t> vec_from_row(row_mat);
+  EXPECT_EQ(vec_from_row.length(), 3);
+  EXPECT_DOUBLE_EQ(vec_from_row[0], 4.0);
+  EXPECT_DOUBLE_EQ(vec_from_row[1], 5.0);
+  EXPECT_DOUBLE_EQ(vec_from_row[2], 6.0);
+
+  Matrix<real_t> mat(2, 3);
+  mat(1, 1) = 1.0;  
+  mat(2, 1) = 2.0;
+  mat(1, 2) = 3.0;  
+  mat(2, 2) = 4.0;
+  mat(1, 3) = 5.0;  
+  mat(2, 3) = 6.0;
+
+  Vector<real_t> vec_from_mat(mat);
+  EXPECT_EQ(vec_from_mat.length(), 6);
+  EXPECT_DOUBLE_EQ(vec_from_mat[0], 1.0);
+  EXPECT_DOUBLE_EQ(vec_from_mat[1], 2.0);
+  EXPECT_DOUBLE_EQ(vec_from_mat[2], 3.0);
+  EXPECT_DOUBLE_EQ(vec_from_mat[3], 4.0);
+  EXPECT_DOUBLE_EQ(vec_from_mat[4], 5.0);
+  EXPECT_DOUBLE_EQ(vec_from_mat[5], 6.0);
+
+  Matrix<real_t> single_mat(1, 1);
+  single_mat(1, 1) = 42.0;
+
+  Vector<real_t> vec_from_single(single_mat);
+  EXPECT_EQ(vec_from_single.length(), 1);
+  EXPECT_DOUBLE_EQ(vec_from_single[0], 42.0);
+  EXPECT_DOUBLE_EQ(vec_from_single(1), 42.0);
+
+  Matrix<int64_t> int_mat(2, 2);
+  int_mat(1, 1) = 10;
+  int_mat(2, 1) = 20;
+  int_mat(1, 2) = 30;
+  int_mat(2, 2) = 40;
+
+  Vector<int64_t> vec_from_int(int_mat);
+  EXPECT_EQ(vec_from_int.length(), 4);
+  EXPECT_EQ(vec_from_int[0], 10);
+  EXPECT_EQ(vec_from_int[1], 20);
+  EXPECT_EQ(vec_from_int[2], 30);
+  EXPECT_EQ(vec_from_int[3], 40);
+
+  Matrix<real_t> mat_copy(2, 1);
+  mat_copy(1, 1) = 100.0;
+  mat_copy(2, 1) = 200.0;
+
+  Vector<real_t> vec_copy(mat_copy);
+
+  EXPECT_DOUBLE_EQ(vec_copy[0], 100.0);
+  EXPECT_DOUBLE_EQ(vec_copy[1], 200.0);
+}
+
 TEST(VectorTest, CopyConstructor)
 {
   Vector<real_t> vec1 = {1.0, 2.0, 3.0};
@@ -292,6 +367,55 @@ TEST(VectorTest, Norm)
   EXPECT_DOUBLE_EQ(norm(vecMixed), 13.0);  // sqrt(9 + 16 + 144) = sqrt(169) = 13
 }
 
+TEST(VectorTest, NormEdgeCases)
+{
+  const Vector<real_t> vec = {3.0, 4.0};
+
+  // Test very large p-norm
+  real_t large_p = norm(vec, 100.0);
+  EXPECT_NEAR(large_p, 4.0, 1e-6);  // Should approach infinity norm
+
+  // Test p close to 1
+  real_t p1 = norm(vec, 1.0);
+  EXPECT_DOUBLE_EQ(p1, 7.0);
+
+  // Single element vector
+  const Vector<real_t> single = {5.0};
+  EXPECT_DOUBLE_EQ(norm(single), 5.0);
+  EXPECT_DOUBLE_EQ(norm(single, 1.0), 5.0);
+  EXPECT_DOUBLE_EQ(norm(single, std::numeric_limits<real_t>::infinity()), 5.0);
+}
+
+TEST(VectorTest, Normalize)
+{
+  const Vector zero = {0.0, 0.0, 0.0};
+  EXPECT_THROW(normalize(zero), mathlib::MathLibError);
+
+  const Vector e1 = {1.0, 0.0, 0.0};
+  const Vector n1 = normalize(e1);
+  EXPECT_DOUBLE_EQ(n1[0], 1.0);
+  EXPECT_DOUBLE_EQ(n1[1], 0.0);
+  EXPECT_DOUBLE_EQ(n1[2], 0.0);
+
+  const Vector e2 = {0.0, 1.0, 0.0};
+  const Vector n2 = normalize(e2);
+  EXPECT_DOUBLE_EQ(n2[0], 0.0);
+  EXPECT_DOUBLE_EQ(n2[1], 1.0);
+  EXPECT_DOUBLE_EQ(n2[2], 0.0);
+
+  const Vector vec = {4.0, 2.0, -3.0};
+  const Vector n = normalize(vec);
+  EXPECT_DOUBLE_EQ(n[0], 4.0 / norm(vec));
+  EXPECT_DOUBLE_EQ(n[1], 2.0 / norm(vec));
+  EXPECT_DOUBLE_EQ(n[2], -3.0 / norm(vec));
+}
+
+TEST(VectorTest, NormalizeZeroVector)
+{
+  const Vector<real_t> zero = {0.0, 0.0, 0.0};
+  EXPECT_THROW(normalize(zero), MathLibError);
+}
+
 TEST(VectorTest, Abs)
 {
   const Vector vec1 = {4.0, 3.0, -2.0};
@@ -405,28 +529,22 @@ TEST(VectorTest, Dot)
   EXPECT_DOUBLE_EQ(dot(vec2, vec1), 1.0 * 4.0 + 2.0 * 5.0 + 3.0 * 6.0);
 }
 
-TEST(VectorTest, Normalize)
+TEST(VectorTest, DotProductZeroLength)
 {
-  const Vector zero = {0.0, 0.0, 0.0};
-  EXPECT_THROW(normalize(zero), mathlib::MathLibError);
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {0.0, 0.0, 0.0};
 
-  const Vector e1 = {1.0, 0.0, 0.0};
-  const Vector n1 = normalize(e1);
-  EXPECT_DOUBLE_EQ(n1[0], 1.0);
-  EXPECT_DOUBLE_EQ(n1[1], 0.0);
-  EXPECT_DOUBLE_EQ(n1[2], 0.0);
+  EXPECT_DOUBLE_EQ(dot(v1, v2), 0.0);
+  EXPECT_DOUBLE_EQ(dot(v2, v1), 0.0);
+  EXPECT_DOUBLE_EQ(dot(v2, v2), 0.0);
+}
 
-  const Vector e2 = {0.0, 1.0, 0.0};
-  const Vector n2 = normalize(e2);
-  EXPECT_DOUBLE_EQ(n2[0], 0.0);
-  EXPECT_DOUBLE_EQ(n2[1], 1.0);
-  EXPECT_DOUBLE_EQ(n2[2], 0.0);
+TEST(VectorTest, DotProductIncompatibleSizes)
+{
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {1.0, 2.0};
 
-  const Vector vec = {4.0, 2.0, -3.0};
-  const Vector n = normalize(vec);
-  EXPECT_DOUBLE_EQ(n[0], 4.0 / norm(vec));
-  EXPECT_DOUBLE_EQ(n[1], 2.0 / norm(vec));
-  EXPECT_DOUBLE_EQ(n[2], -3.0 / norm(vec));
+  EXPECT_THROW(dot(v1, v2), IncompatibleSizeError);
 }
 
 TEST(VectorTest, Cross)
@@ -456,6 +574,192 @@ TEST(VectorTest, Cross)
   EXPECT_DOUBLE_EQ(r4[2], 0.0);
 
   EXPECT_THROW(cross(Vector({1, 2}), Vector({3, 4})), mathlib::IncompatibleSizeError);
+}
+
+TEST(VectorTest, CrossProductIncompatibleSize)
+{
+  const Vector<real_t> v2d = {1.0, 2.0};
+  const Vector<real_t> v3d = {3.0, 4.0, 5.0};
+  const Vector<real_t> v4d = {1.0, 2.0, 3.0, 4.0};
+
+  EXPECT_THROW(cross(v2d, v3d), IncompatibleSizeError);
+  EXPECT_THROW(cross(v3d, v4d), IncompatibleSizeError);
+  EXPECT_THROW(cross(v2d, v2d), IncompatibleSizeError);  // Must be 3D
+}
+
+TEST(VectorTest, Outer)
+{
+  // Basic outer product: 3D vectors
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {4.0, 5.0, 6.0};
+  const Matrix<real_t> result = outer(v1, v2);
+
+  EXPECT_EQ(result.rows(), 3);
+  EXPECT_EQ(result.cols(), 3);
+
+  // Check all elements
+  EXPECT_DOUBLE_EQ(result(1, 1), 1.0 * 4.0);
+  EXPECT_DOUBLE_EQ(result(1, 2), 1.0 * 5.0);
+  EXPECT_DOUBLE_EQ(result(1, 3), 1.0 * 6.0);
+  EXPECT_DOUBLE_EQ(result(2, 1), 2.0 * 4.0);
+  EXPECT_DOUBLE_EQ(result(2, 2), 2.0 * 5.0);
+  EXPECT_DOUBLE_EQ(result(2, 3), 2.0 * 6.0);
+  EXPECT_DOUBLE_EQ(result(3, 1), 3.0 * 4.0);
+  EXPECT_DOUBLE_EQ(result(3, 2), 3.0 * 5.0);
+  EXPECT_DOUBLE_EQ(result(3, 3), 3.0 * 6.0);
+
+  // Non-square matrices: 2x3
+  const Vector<real_t> v3 = {1.0, 2.0};
+  const Vector<real_t> v4 = {3.0, 4.0, 5.0};
+  const Matrix<real_t> result2 = outer(v3, v4);
+
+  EXPECT_EQ(result2.rows(), 2);
+  EXPECT_EQ(result2.cols(), 3);
+  EXPECT_DOUBLE_EQ(result2(1, 1), 1.0 * 3.0);
+  EXPECT_DOUBLE_EQ(result2(1, 2), 1.0 * 4.0);
+  EXPECT_DOUBLE_EQ(result2(1, 3), 1.0 * 5.0);
+  EXPECT_DOUBLE_EQ(result2(2, 1), 2.0 * 3.0);
+  EXPECT_DOUBLE_EQ(result2(2, 2), 2.0 * 4.0);
+  EXPECT_DOUBLE_EQ(result2(2, 3), 2.0 * 5.0);
+
+  // Non-square matrices: 3x2
+  const Matrix<real_t> result3 = outer(v4, v3);
+  EXPECT_EQ(result3.rows(), 3);
+  EXPECT_EQ(result3.cols(), 2);
+  EXPECT_DOUBLE_EQ(result3(1, 1), 3.0 * 1.0);
+  EXPECT_DOUBLE_EQ(result3(1, 2), 3.0 * 2.0);
+  EXPECT_DOUBLE_EQ(result3(2, 1), 4.0 * 1.0);
+  EXPECT_DOUBLE_EQ(result3(2, 2), 4.0 * 2.0);
+  EXPECT_DOUBLE_EQ(result3(3, 1), 5.0 * 1.0);
+  EXPECT_DOUBLE_EQ(result3(3, 2), 5.0 * 2.0);
+
+  // Integer vectors
+  const Vector<int64_t> vi1 = {1, 2, 3};
+  const Vector<int64_t> vi2 = {4, 5, 6};
+  const Matrix<int64_t> result_int = outer(vi1, vi2);
+
+  EXPECT_EQ(result_int.rows(), 3);
+  EXPECT_EQ(result_int.cols(), 3);
+  EXPECT_EQ(result_int(1, 1), 4);
+  EXPECT_EQ(result_int(2, 2), 10);
+  EXPECT_EQ(result_int(3, 3), 18);
+
+  // Mixed types: int and real
+  const Vector<int64_t> vi_mixed = {1, 2};
+  const Vector<real_t> vr_mixed = {3.5, 4.5};
+  const Matrix<real_t> result_mixed = outer(vi_mixed, vr_mixed);
+
+  EXPECT_EQ(result_mixed.rows(), 2);
+  EXPECT_EQ(result_mixed.cols(), 2);
+  EXPECT_DOUBLE_EQ(result_mixed(1, 1), 1.0 * 3.5);
+  EXPECT_DOUBLE_EQ(result_mixed(1, 2), 1.0 * 4.5);
+  EXPECT_DOUBLE_EQ(result_mixed(2, 1), 2.0 * 3.5);
+  EXPECT_DOUBLE_EQ(result_mixed(2, 2), 2.0 * 4.5);
+
+  // Test with negative values
+  const Vector<real_t> v_neg1 = {-1.0, 2.0};
+  const Vector<real_t> v_neg2 = {3.0, -4.0};
+  const Matrix<real_t> result_neg = outer(v_neg1, v_neg2);
+
+  EXPECT_DOUBLE_EQ(result_neg(1, 1), -3.0);
+  EXPECT_DOUBLE_EQ(result_neg(1, 2), 4.0);
+  EXPECT_DOUBLE_EQ(result_neg(2, 1), 6.0);
+  EXPECT_DOUBLE_EQ(result_neg(2, 2), -8.0);
+}
+
+TEST(VectorTest, OuterProductEdgeCases)
+{
+  // Single element vectors
+  const Vector<real_t> v1 = {5.0};
+  const Vector<real_t> v2 = {3.0};
+  const Matrix<real_t> result1 = outer(v1, v2);
+
+  EXPECT_EQ(result1.rows(), 1);
+  EXPECT_EQ(result1.cols(), 1);
+  EXPECT_DOUBLE_EQ(result1(1, 1), 15.0);
+
+  // One single element, one multi-element
+  const Vector<real_t> v3 = {2.0};
+  const Vector<real_t> v4 = {1.0, 2.0, 3.0};
+  const Matrix<real_t> result2 = outer(v3, v4);
+
+  EXPECT_EQ(result2.rows(), 1);
+  EXPECT_EQ(result2.cols(), 3);
+  EXPECT_DOUBLE_EQ(result2(1, 1), 2.0);
+  EXPECT_DOUBLE_EQ(result2(1, 2), 4.0);
+  EXPECT_DOUBLE_EQ(result2(1, 3), 6.0);
+
+  // Reverse order
+  const Matrix<real_t> result3 = outer(v4, v3);
+  EXPECT_EQ(result3.rows(), 3);
+  EXPECT_EQ(result3.cols(), 1);
+  EXPECT_DOUBLE_EQ(result3(1, 1), 2.0);
+  EXPECT_DOUBLE_EQ(result3(2, 1), 4.0);
+  EXPECT_DOUBLE_EQ(result3(3, 1), 6.0);
+
+  // Vector with zeros
+  const Vector<real_t> v_zero = {0.0, 1.0, 2.0};
+  const Vector<real_t> v_nonzero = {3.0, 4.0};
+  const Matrix<real_t> result_zero = outer(v_zero, v_nonzero);
+
+  EXPECT_DOUBLE_EQ(result_zero(1, 1), 0.0);
+  EXPECT_DOUBLE_EQ(result_zero(1, 2), 0.0);
+  EXPECT_DOUBLE_EQ(result_zero(2, 1), 3.0);
+  EXPECT_DOUBLE_EQ(result_zero(2, 2), 4.0);
+  EXPECT_DOUBLE_EQ(result_zero(3, 1), 6.0);
+  EXPECT_DOUBLE_EQ(result_zero(3, 2), 8.0);
+
+  // All zeros
+  const Vector<real_t> v_all_zero1 = {0.0, 0.0};
+  const Vector<real_t> v_all_zero2 = {0.0, 0.0, 0.0};
+  const Matrix<real_t> result_all_zero = outer(v_all_zero1, v_all_zero2);
+
+  EXPECT_EQ(result_all_zero.rows(), 2);
+  EXPECT_EQ(result_all_zero.cols(), 3);
+  for (index_t i = 1; i <= 2; ++i) {
+    for (index_t col_idx = 1; col_idx <= 3; ++col_idx) {
+      EXPECT_DOUBLE_EQ(result_all_zero(i, col_idx), 0.0);
+    }
+  }
+
+  // Large dimensional vectors
+  const Vector<real_t> v_large1 = {1.0, 2.0, 3.0, 4.0, 5.0};
+  const Vector<real_t> v_large2 = {2.0, 3.0, 4.0, 5.0};
+  const Matrix<real_t> result_large = outer(v_large1, v_large2);
+
+  EXPECT_EQ(result_large.rows(), 5);
+  EXPECT_EQ(result_large.cols(), 4);
+  EXPECT_DOUBLE_EQ(result_large(1, 1), 2.0);
+  EXPECT_DOUBLE_EQ(result_large(5, 4), 25.0);
+  EXPECT_DOUBLE_EQ(result_large(3, 2), 9.0);
+
+  // Verify properties: outer(v1, v2) should be transpose-related to outer(v2, v1)
+  const Vector<real_t> va = {1.0, 2.0};
+  const Vector<real_t> vb = {3.0, 4.0, 5.0};
+  const Matrix<real_t> ab = outer(va, vb);
+  const Matrix<real_t> ba = outer(vb, va);
+
+  EXPECT_EQ(ab.rows(), ba.cols());
+  EXPECT_EQ(ab.cols(), ba.rows());
+
+  // Check transpose relationship
+  for (index_t i = 1; i <= static_cast<index_t>(ab.rows()); ++i) {
+    for (index_t col_idx = 1; col_idx <= static_cast<index_t>(ab.cols()); ++col_idx) {
+      EXPECT_DOUBLE_EQ(ab(i, col_idx), ba(col_idx, i));
+    }
+  }
+
+  // Test with fractional values
+  const Vector<real_t> v_frac1 = {0.5, 1.5, 2.5};
+  const Vector<real_t> v_frac2 = {0.2, 0.4};
+  const Matrix<real_t> result_frac = outer(v_frac1, v_frac2);
+
+  EXPECT_DOUBLE_EQ(result_frac(1, 1), 0.5 * 0.2);
+  EXPECT_DOUBLE_EQ(result_frac(1, 2), 0.5 * 0.4);
+  EXPECT_DOUBLE_EQ(result_frac(2, 1), 1.5 * 0.2);
+  EXPECT_DOUBLE_EQ(result_frac(2, 2), 1.5 * 0.4);
+  EXPECT_DOUBLE_EQ(result_frac(3, 1), 2.5 * 0.2);
+  EXPECT_DOUBLE_EQ(result_frac(3, 2), 2.5 * 0.4);
 }
 
 TEST(VectorTest, AdditionVectorRealVectorReal)
@@ -1085,60 +1389,6 @@ TEST(VectorTest, MixedTypeVectorOperations)
   EXPECT_DOUBLE_EQ(dot_result, 1.0 * 1.5 + 2.0 * 2.5 + 3.0 * 3.5);
 }
 
-TEST(VectorTest, NormEdgeCases)
-{
-  const Vector<real_t> vec = {3.0, 4.0};
-
-  // Test very large p-norm
-  real_t large_p = norm(vec, 100.0);
-  EXPECT_NEAR(large_p, 4.0, 1e-6);  // Should approach infinity norm
-
-  // Test p close to 1
-  real_t p1 = norm(vec, 1.0);
-  EXPECT_DOUBLE_EQ(p1, 7.0);
-
-  // Single element vector
-  const Vector<real_t> single = {5.0};
-  EXPECT_DOUBLE_EQ(norm(single), 5.0);
-  EXPECT_DOUBLE_EQ(norm(single, 1.0), 5.0);
-  EXPECT_DOUBLE_EQ(norm(single, std::numeric_limits<real_t>::infinity()), 5.0);
-}
-
-TEST(VectorTest, NormalizeZeroVector)
-{
-  const Vector<real_t> zero = {0.0, 0.0, 0.0};
-  EXPECT_THROW(normalize(zero), MathLibError);
-}
-
-TEST(VectorTest, CrossProductIncompatibleSize)
-{
-  const Vector<real_t> v2d = {1.0, 2.0};
-  const Vector<real_t> v3d = {3.0, 4.0, 5.0};
-  const Vector<real_t> v4d = {1.0, 2.0, 3.0, 4.0};
-
-  EXPECT_THROW(cross(v2d, v3d), IncompatibleSizeError);
-  EXPECT_THROW(cross(v3d, v4d), IncompatibleSizeError);
-  EXPECT_THROW(cross(v2d, v2d), IncompatibleSizeError);  // Must be 3D
-}
-
-TEST(VectorTest, DotProductZeroLength)
-{
-  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
-  const Vector<real_t> v2 = {0.0, 0.0, 0.0};
-
-  EXPECT_DOUBLE_EQ(dot(v1, v2), 0.0);
-  EXPECT_DOUBLE_EQ(dot(v2, v1), 0.0);
-  EXPECT_DOUBLE_EQ(dot(v2, v2), 0.0);
-}
-
-TEST(VectorTest, DotProductIncompatibleSizes)
-{
-  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
-  const Vector<real_t> v2 = {1.0, 2.0};
-
-  EXPECT_THROW(dot(v1, v2), IncompatibleSizeError);
-}
-
 TEST(VectorTest, SingleElementVector)
 {
   const Vector<real_t> single = {42.0};
@@ -1237,4 +1487,208 @@ TEST(VectorTest, ComplexVectorOperations)
   EXPECT_DOUBLE_EQ(cv_sum[0].imag(), 8.0);
   EXPECT_DOUBLE_EQ(cv_sum[1].real(), 10.0);
   EXPECT_DOUBLE_EQ(cv_sum[1].imag(), 12.0);
+}
+
+TEST(VectorTest, HcatBasic)
+{
+  // Test horizontal concatenation of two column vectors
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {4.0, 5.0, 6.0};
+
+  Matrix<real_t> result = hcat(v1, v2);
+
+  // Result should be a 3x2 matrix
+  EXPECT_EQ(result.rows(), 3);
+  EXPECT_EQ(result.cols(), 2);
+
+  // First column should be v1
+  EXPECT_DOUBLE_EQ(result(1, 1), 1.0);
+  EXPECT_DOUBLE_EQ(result(2, 1), 2.0);
+  EXPECT_DOUBLE_EQ(result(3, 1), 3.0);
+
+  // Second column should be v2
+  EXPECT_DOUBLE_EQ(result(1, 2), 4.0);
+  EXPECT_DOUBLE_EQ(result(2, 2), 5.0);
+  EXPECT_DOUBLE_EQ(result(3, 2), 6.0);
+}
+
+TEST(VectorTest, HcatSingleElement)
+{
+  // Test with single-element vectors
+  const Vector<real_t> v1 = {7.0};
+  const Vector<real_t> v2 = {9.0};
+
+  Matrix<real_t> result = hcat(v1, v2);
+
+  EXPECT_EQ(result.rows(), 1);
+  EXPECT_EQ(result.cols(), 2);
+  EXPECT_DOUBLE_EQ(result(1, 1), 7.0);
+  EXPECT_DOUBLE_EQ(result(1, 2), 9.0);
+}
+
+TEST(VectorTest, HcatDifferentLengthsThrows)
+{
+  // Test that hcat throws when vectors have different lengths
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {4.0, 5.0};
+
+  EXPECT_THROW(hcat(v1, v2), IncompatibleSizeError);
+}
+
+TEST(VectorTest, HcatMixedTypes)
+{
+  // Test with mixed integer and real types
+  const Vector<int> v1 = {1, 2, 3};
+  const Vector<int> v2 = {4, 5, 6};
+
+  Matrix<int> result = hcat(v1, v2);
+
+  EXPECT_EQ(result.rows(), 3);
+  EXPECT_EQ(result.cols(), 2);
+  EXPECT_EQ(result(1, 1), 1);
+  EXPECT_EQ(result(2, 2), 5);
+  EXPECT_EQ(result(3, 1), 3);
+}
+
+TEST(VectorTest, VcatBasic)
+{
+  // Test vertical concatenation of two column vectors
+  const Vector<real_t> v1 = {1.0, 2.0, 3.0};
+  const Vector<real_t> v2 = {4.0, 5.0, 6.0};
+
+  Vector<real_t> result = vcat(v1, v2);
+
+  // Result should be a vector of length 6
+  EXPECT_EQ(result.length(), 6);
+  EXPECT_EQ(result.rows(), 6);
+  EXPECT_EQ(result.cols(), 1);
+
+  // Check all elements
+  EXPECT_DOUBLE_EQ(result[0], 1.0);
+  EXPECT_DOUBLE_EQ(result[1], 2.0);
+  EXPECT_DOUBLE_EQ(result[2], 3.0);
+  EXPECT_DOUBLE_EQ(result[3], 4.0);
+  EXPECT_DOUBLE_EQ(result[4], 5.0);
+  EXPECT_DOUBLE_EQ(result[5], 6.0);
+}
+
+TEST(VectorTest, VcatSingleElement)
+{
+  // Test with single-element vectors
+  const Vector<real_t> v1 = {1.5};
+  const Vector<real_t> v2 = {2.5};
+
+  Vector<real_t> result = vcat(v1, v2);
+
+  EXPECT_EQ(result.length(), 2);
+  EXPECT_DOUBLE_EQ(result[0], 1.5);
+  EXPECT_DOUBLE_EQ(result[1], 2.5);
+}
+
+TEST(VectorTest, VcatEmptyVectors)
+{
+  // Test with empty vectors
+  const Vector<real_t> v1;
+  const Vector<real_t> v2 = {1.0, 2.0};
+
+  Vector<real_t> result = vcat(v1, v2);
+
+  EXPECT_EQ(result.length(), 2);
+  EXPECT_DOUBLE_EQ(result[0], 1.0);
+  EXPECT_DOUBLE_EQ(result[1], 2.0);
+}
+
+TEST(VectorTest, VcatMixedTypes)
+{
+  // Test with integer vectors
+  const Vector<int> v1 = {1, 2};
+  const Vector<int> v2 = {3, 4, 5};
+
+  Vector<int> result = vcat(v1, v2);
+
+  EXPECT_EQ(result.length(), 5);
+  EXPECT_EQ(result[0], 1);
+  EXPECT_EQ(result[1], 2);
+  EXPECT_EQ(result[2], 3);
+  EXPECT_EQ(result[3], 4);
+  EXPECT_EQ(result[4], 5);
+}
+
+TEST(VectorTest, VcatMultipleOperations)
+{
+  // Test chaining vcat operations
+  const Vector<real_t> v1 = {1.0};
+  const Vector<real_t> v2 = {2.0};
+  const Vector<real_t> v3 = {3.0};
+
+  Vector<real_t> result = vcat(vcat(v1, v2), v3);
+
+  EXPECT_EQ(result.length(), 3);
+  EXPECT_DOUBLE_EQ(result[0], 1.0);
+  EXPECT_DOUBLE_EQ(result[1], 2.0);
+  EXPECT_DOUBLE_EQ(result[2], 3.0);
+}
+
+TEST(VectorTest, HcatMultipleOperations)
+{
+  // Test creating a matrix from multiple vectors using hcat
+  const Vector<real_t> v1 = {1.0, 2.0};
+  const Vector<real_t> v2 = {3.0, 4.0};
+  const Vector<real_t> v3 = {5.0, 6.0};
+
+  // Create matrix from first two vectors, then use Matrix hcat to add third
+  Matrix<real_t> mat12 = hcat(v1, v2);
+  Matrix<real_t> result = hcat(mat12, v3);
+
+  EXPECT_EQ(result.rows(), 2);
+  EXPECT_EQ(result.cols(), 3);
+  EXPECT_DOUBLE_EQ(result(1, 1), 1.0);
+  EXPECT_DOUBLE_EQ(result(2, 1), 2.0);
+  EXPECT_DOUBLE_EQ(result(1, 2), 3.0);
+  EXPECT_DOUBLE_EQ(result(2, 2), 4.0);
+  EXPECT_DOUBLE_EQ(result(1, 3), 5.0);
+  EXPECT_DOUBLE_EQ(result(2, 3), 6.0);
+}
+
+TEST(VectorTest, VcatLargeVectors)
+{
+  // Test with larger vectors
+  Vector<real_t> v1(100);
+  Vector<real_t> v2(150);
+
+  for (size_t i = 0; i < 100; ++i) {
+    v1[i] = static_cast<real_t>(i);
+  }
+  for (size_t i = 0; i < 150; ++i) {
+    v2[i] = static_cast<real_t>(i + 100);
+  }
+
+  Vector<real_t> result = vcat(v1, v2);
+
+  EXPECT_EQ(result.length(), 250);
+  EXPECT_DOUBLE_EQ(result[0], 0.0);
+  EXPECT_DOUBLE_EQ(result[99], 99.0);
+  EXPECT_DOUBLE_EQ(result[100], 100.0);
+  EXPECT_DOUBLE_EQ(result[249], 249.0);
+}
+
+TEST(VectorTest, HcatLargeVectors)
+{
+  // Test with larger vectors
+  Vector<real_t> v1(100);
+  Vector<real_t> v2(100);
+
+  for (size_t i = 0; i < 100; ++i) {
+    v1[i] = static_cast<real_t>(i);
+    v2[i] = static_cast<real_t>(i + 100);
+  }
+
+  Matrix<real_t> result = hcat(v1, v2);
+
+  EXPECT_EQ(result.rows(), 100);
+  EXPECT_EQ(result.cols(), 2);
+  EXPECT_DOUBLE_EQ(result(1, 1), 0.0);
+  EXPECT_DOUBLE_EQ(result(100, 1), 99.0);
+  EXPECT_DOUBLE_EQ(result(1, 2), 100.0);
+  EXPECT_DOUBLE_EQ(result(100, 2), 199.0);
 }
