@@ -37,11 +37,6 @@
     slice: [], ()
     sort
     unique
-    rotate2d
-    filter
-    roll
-    elem inversion
-    dft
 */
 
 namespace mathlib
@@ -55,30 +50,43 @@ class Vector;
 template <typename data_t>
 class Matrix;
 
+/// @brief A class for n-dimensional vectors
 template <typename data_t>
 class Vector
 {
 protected:
+  /// @brief The underlying data array
   std::unique_ptr<data_t[]> m_data;
+  /// @brief The size of the vector
   dim_t m_size;
 
 public:
+  /// @brief Creates an empty vector
   Vector() : m_data(nullptr), m_size(0, 0) {}
 
+  /// @brief Creates a vector with n elements initialized to zero
+  /// @param n Number of elements
   explicit Vector(size_t n) : m_data(std::make_unique<data_t[]>(n)), m_size(n, 1) {}
 
+  /// @brief Creates a vector from an initializer list
+  /// @param values Initializer list of values
   Vector(std::initializer_list<data_t> values)
       : m_data(std::make_unique<data_t[]>(values.size())), m_size(values.size(), 1)
   {
     std::copy(values.begin(), values.end(), m_data.get());
   }
 
-  Vector(const Matrix<data_t>& mat) : m_data(std::make_unique<data_t[]>(mat.length())), m_size(mat.length(), 1) {
+  /// @brief Creates a vector from a matrix by flattening it
+  /// @param mat Matrix to convert to vector
+  Vector(const Matrix<data_t>& mat) : m_data(std::make_unique<data_t[]>(mat.length())), m_size(mat.length(), 1)
+  {
     for (size_t i = 0; i < mat.length(); ++i) {
       m_data[i] = mat[i];
     }
   }
 
+  /// @brief Copy constructor
+  /// @param other Vector to copy
   Vector(const Vector& other)
       : m_data(other.length() > 0 ? std::make_unique<data_t[]>(other.length()) : nullptr), m_size(other.m_size)
   {
@@ -87,10 +95,16 @@ public:
     }
   }
 
+  /// @brief Move constructor
+  /// @param other Vector to move
   Vector(Vector&& other) noexcept : m_data(std::move(other.m_data)), m_size(other.m_size) { other.m_size = {0, 0}; }
 
+  /// @brief Destructor
   ~Vector() = default;
 
+  /// @brief Copy assignment operator
+  /// @param other Vector to copy
+  /// @returns Reference to this vector
   Vector& operator=(const Vector& other)
   {
     if (this != &other) {
@@ -105,6 +119,9 @@ public:
     return *this;
   }
 
+  /// @brief Move assignment operator
+  /// @param other Vector to move
+  /// @returns Reference to this vector
   Vector& operator=(Vector&& other) noexcept
   {
     if (this != &other) {
@@ -115,20 +132,37 @@ public:
     return *this;
   }
 
+  /// @brief Get the length (number of elements) of the vector
+  /// @returns Length of the vector
   size_t length() const { return m_size.rows * m_size.cols; }
 
+  /// @brief Get the size dimensions of the vector
+  /// @returns Size as dim_t structure
   dim_t size() const { return m_size; }
 
+  /// @brief Get the number of rows
+  /// @returns Number of rows
   size_t rows() const { return m_size.rows; }
 
+  /// @brief Get the number of columns
+  /// @returns Number of columns
   size_t cols() const { return m_size.cols; }
 
+  /// @brief Check if the vector is empty
+  /// @returns True if empty, false otherwise
   bool isEmpty() const { return length() == 0; }
 
+  /// @brief Get pointer to underlying data
+  /// @returns Pointer to data array
   data_t* data() { return m_data.get(); }
 
+  /// @brief Get const pointer to underlying data
+  /// @returns Const pointer to data array
   const data_t* data() const { return m_data.get(); }
 
+  /// @brief Access element at index i (0-based indexing)
+  /// @param i Index
+  /// @returns Reference to element at index i
   data_t& operator[](const size_t i)
   {
     if (i < length()) {
@@ -137,6 +171,9 @@ public:
     throw IndexOutOfRangeError(i);
   }
 
+  /// @brief Access element at index i (0-based indexing)
+  /// @param i Index
+  /// @returns Const reference to element at index i
   const data_t& operator[](const size_t i) const
   {
     if (i < length()) {
@@ -145,6 +182,9 @@ public:
     throw IndexOutOfRangeError(i);
   }
 
+  /// @brief Access element at index i (1-based indexing, supports negative indices)
+  /// @param i Index (1-based, negative indices count from end)
+  /// @returns Reference to element at index i
   template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
   data_t& operator()(const int_t i)
   {
@@ -160,6 +200,9 @@ public:
     return m_data[idx];
   }
 
+  /// @brief Access element at index i (1-based indexing, supports negative indices)
+  /// @param i Index (1-based, negative indices count from end)
+  /// @returns Const reference to element at index i
   template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
   const data_t& operator()(const int_t i) const
   {
@@ -175,8 +218,12 @@ public:
     return m_data[idx];
   }
 
+  /// @brief Unary plus operator
+  /// @returns A copy of the vector
   Vector operator+() const { return Vector(*this); }
 
+  /// @brief Unary minus operator (negate vector)
+  /// @returns A negated copy of the vector
   Vector operator-() const
   {
     Vector tmp;
@@ -191,12 +238,18 @@ public:
 
 #pragma region Vector Constructor Methods
 
+/// @brief Create a vector of zeros
+/// @param n Length of the vector
+/// @returns Vector filled with zeros
 template <typename data_t>
 Vector<data_t> zeros(size_t n)
 {
   return Vector<data_t>(n);
 }
 
+/// @brief Create a vector of ones
+/// @param n Length of the vector
+/// @returns Vector filled with ones
 template <typename data_t>
 Vector<data_t> ones(size_t n)
 {
@@ -211,6 +264,10 @@ Vector<data_t> ones(size_t n)
 
 #pragma region Arithmetic Operators
 
+/// @brief Add two vectors element-wise
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result of element-wise addition
 template <typename data_t>
 Vector<data_t> operator+(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -225,6 +282,10 @@ Vector<data_t> operator+(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Add two vectors of different types element-wise
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result of element-wise addition with appropriate result type
 template <typename T1, typename T2>
 auto operator+(const Vector<T1>& lhs,
                const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
@@ -241,6 +302,10 @@ auto operator+(const Vector<T1>& lhs,
   return result;
 }
 
+/// @brief Add a scalar to all elements of a vector
+/// @param lhs Vector
+/// @param rhs Scalar value
+/// @returns Result vector
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator+(const Vector<data_t>& lhs, const scalar_t& rhs)
 {
@@ -252,6 +317,10 @@ Vector<data_t> operator+(const Vector<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Add a scalar to all elements of a vector
+/// @param lhs Scalar value
+/// @param rhs Vector
+/// @returns Result vector
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator+(const scalar_t& lhs, const Vector<data_t>& rhs)
 {
@@ -263,6 +332,10 @@ Vector<data_t> operator+(const scalar_t& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Subtract two vectors element-wise
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result of element-wise subtraction
 template <typename data_t>
 Vector<data_t> operator-(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -277,6 +350,10 @@ Vector<data_t> operator-(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Subtract two vectors of different types element-wise
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result of element-wise subtraction with appropriate result type
 template <typename T1, typename T2>
 auto operator-(const Vector<T1>& lhs,
                const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() - std::declval<T2>())>
@@ -293,6 +370,10 @@ auto operator-(const Vector<T1>& lhs,
   return result;
 }
 
+/// @brief Subtract a scalar from all elements of a vector
+/// @param lhs Vector
+/// @param rhs Scalar value
+/// @returns Result vector
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator-(const Vector<data_t>& lhs, const scalar_t& rhs)
 {
@@ -304,6 +385,10 @@ Vector<data_t> operator-(const Vector<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Subtract a vector from a scalar
+/// @param lhs Scalar value
+/// @param rhs Vector
+/// @returns Result vector
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator-(const scalar_t& lhs, const Vector<data_t>& rhs)
 {
@@ -315,6 +400,10 @@ Vector<data_t> operator-(const scalar_t& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Compute dot product of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Dot product (scalar value)
 template <typename data_t>
 real_t operator*(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -329,6 +418,10 @@ real_t operator*(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Compute dot product of two vectors of different types
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Dot product (scalar value)
 template <typename T1, typename T2>
 real_t operator*(const Vector<T1>& lhs, const Vector<T2>& rhs)
 {
@@ -343,6 +436,10 @@ real_t operator*(const Vector<T1>& lhs, const Vector<T2>& rhs)
   return result;
 }
 
+/// @brief Multiply all elements of a vector by a scalar
+/// @param lhs Vector
+/// @param rhs Scalar value
+/// @returns Result vector
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator*(const Vector<data_t>& lhs, const scalar_t& rhs)
 {
@@ -354,6 +451,10 @@ Vector<data_t> operator*(const Vector<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Multiply all elements of a vector by a scalar
+/// @param lhs Scalar value
+/// @param rhs Vector
+/// @returns Result vector
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator*(const scalar_t& lhs, const Vector<data_t>& rhs)
 {
@@ -365,6 +466,10 @@ Vector<data_t> operator*(const scalar_t& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Divide all elements of a vector by a scalar
+/// @param lhs Vector
+/// @param rhs Scalar value (divisor)
+/// @returns Result vector
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator/(const Vector<data_t>& lhs, const scalar_t& rhs)
 {
@@ -379,6 +484,10 @@ Vector<data_t> operator/(const Vector<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Divide a scalar by all elements of a vector
+/// @param lhs Scalar value (dividend)
+/// @param rhs Vector (divisor)
+/// @returns Result vector
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Vector<data_t> operator/(const scalar_t& lhs, const Vector<data_t>& rhs)
 {
@@ -397,6 +506,10 @@ Vector<data_t> operator/(const scalar_t& lhs, const Vector<data_t>& rhs)
 
 #pragma region Logical Operators
 
+/// @brief Element-wise logical AND of two boolean vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result boolean vector
 inline Vector<bool> operator&&(const Vector<bool>& lhs, const Vector<bool>& rhs)
 {
   if (lhs.length() != rhs.length()) {
@@ -410,6 +523,10 @@ inline Vector<bool> operator&&(const Vector<bool>& lhs, const Vector<bool>& rhs)
   return result;
 }
 
+/// @brief Element-wise logical OR of two boolean vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result boolean vector
 inline Vector<bool> operator||(const Vector<bool>& lhs, const Vector<bool>& rhs)
 {
   if (lhs.length() != rhs.length()) {
@@ -423,6 +540,10 @@ inline Vector<bool> operator||(const Vector<bool>& lhs, const Vector<bool>& rhs)
   return result;
 }
 
+/// @brief Element-wise logical XOR of two boolean vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Result boolean vector
 inline Vector<bool> operator^(const Vector<bool>& lhs, const Vector<bool>& rhs)
 {
   if (lhs.length() != rhs.length()) {
@@ -436,6 +557,10 @@ inline Vector<bool> operator^(const Vector<bool>& lhs, const Vector<bool>& rhs)
   return result;
 }
 
+/// @brief Element-wise equality comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator==(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -450,6 +575,10 @@ Vector<bool> operator==(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise inequality comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator!=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -464,6 +593,10 @@ Vector<bool> operator!=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise greater-than comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator>(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -478,6 +611,10 @@ Vector<bool> operator>(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise greater-than-or-equal comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator>=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -492,6 +629,10 @@ Vector<bool> operator>=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise less-than comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator<(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -506,6 +647,10 @@ Vector<bool> operator<(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise less-than-or-equal comparison of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Boolean vector with comparison results
 template <typename data_t>
 Vector<bool> operator<=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -524,24 +669,36 @@ Vector<bool> operator<=(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 
 #pragma region Methods
 
+/// @brief Get the length of a vector
+/// @param vec Input vector
+/// @returns Length of the vector
 template <typename data_t>
 size_t length(const Vector<data_t>& vec)
 {
   return vec.length();
 }
 
+/// @brief Get the size dimensions of a vector
+/// @param vec Input vector
+/// @returns Size as dim_t structure
 template <typename data_t>
 dim_t size(const Vector<data_t>& vec)
 {
   return vec.size();
 }
 
+/// @brief Check if a vector is empty
+/// @param vec Input vector
+/// @returns True if empty, false otherwise
 template <typename data_t>
 bool isEmpty(const Vector<data_t>& vec)
 {
   return vec.isEmpty();
 }
 
+/// @brief Transpose a vector (convert column vector to row vector or vice versa)
+/// @param vec Input vector
+/// @returns Transposed matrix
 template <typename data_t>
 Matrix<data_t> transpose(const Vector<data_t>& vec)
 {
@@ -552,6 +709,10 @@ Matrix<data_t> transpose(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Horizontally concatenate two vectors into a matrix
+/// @param lhs Left vector (first column)
+/// @param rhs Right vector (second column)
+/// @returns Matrix with two columns
 template <typename data_t>
 Matrix<data_t> hcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -574,6 +735,10 @@ Matrix<data_t> hcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Vertically concatenate two vectors
+/// @param lhs First vector
+/// @param rhs Second vector
+/// @returns Concatenated vector
 template <typename data_t>
 Vector<data_t> vcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -594,6 +759,10 @@ Vector<data_t> vcat(const Vector<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Compute the p-norm of a vector
+/// @param vec Input vector
+/// @param p Norm parameter (default: 2 for Euclidean norm)
+/// @returns p-norm of the vector
 template <typename data_t>
 real_t norm(const Vector<data_t>& vec, real_t p = real_t(2))
 {
@@ -620,6 +789,9 @@ real_t norm(const Vector<data_t>& vec, real_t p = real_t(2))
   return std::pow(sum(pow(abs(vec), p)), 1.0 / p);
 }
 
+/// @brief Normalize a vector (divide by its norm)
+/// @param vec Input vector
+/// @returns Normalized vector
 template <typename data_t>
 Vector<data_t> normalize(const Vector<data_t>& vec)
 {
@@ -630,6 +802,9 @@ Vector<data_t> normalize(const Vector<data_t>& vec)
   return vec / n;
 }
 
+/// @brief Compute absolute value of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with absolute values
 template <typename data_t>
 Vector<data_t> abs(const Vector<data_t>& vec)
 {
@@ -644,6 +819,9 @@ Vector<data_t> abs(const Vector<data_t>& vec)
 template <typename data_t>
 Vector<data_t> abs(const Vector<data_t>& vec);
 
+/// @brief Compute exponential of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with exponential values
 template <typename data_t>
 Vector<data_t> exp(const Vector<data_t>& vec)
 {
@@ -655,6 +833,9 @@ Vector<data_t> exp(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute natural logarithm of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with logarithmic values
 template <typename data_t>
 Vector<data_t> log(const Vector<data_t>& vec)
 {
@@ -668,6 +849,9 @@ Vector<data_t> log(const Vector<data_t>& vec)
 
 #pragma region Trigonometric Methods
 
+/// @brief Compute sine of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with sine values
 template <typename data_t>
 Vector<data_t> sin(const Vector<data_t>& vec)
 {
@@ -679,6 +863,9 @@ Vector<data_t> sin(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute cosine of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with cosine values
 template <typename data_t>
 Vector<data_t> cos(const Vector<data_t>& vec)
 {
@@ -690,6 +877,9 @@ Vector<data_t> cos(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute tangent of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with tangent values
 template <typename data_t>
 Vector<data_t> tan(const Vector<data_t>& vec)
 {
@@ -701,6 +891,9 @@ Vector<data_t> tan(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute arcsine of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with arcsine values
 template <typename data_t>
 Vector<data_t> asin(const Vector<data_t>& vec)
 {
@@ -712,6 +905,9 @@ Vector<data_t> asin(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute arccosine of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with arccosine values
 template <typename data_t>
 Vector<data_t> acos(const Vector<data_t>& vec)
 {
@@ -723,6 +919,9 @@ Vector<data_t> acos(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute arctangent of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with arctangent values
 template <typename data_t>
 Vector<data_t> atan(const Vector<data_t>& vec)
 {
@@ -736,6 +935,10 @@ Vector<data_t> atan(const Vector<data_t>& vec)
 
 #pragma endregion
 
+/// @brief Raise each element of a vector to a power
+/// @param vec Input vector
+/// @param exponent Power exponent
+/// @returns Vector with powered values
 template <typename data_t>
 Vector<data_t> pow(const Vector<data_t>& vec, real_t exponent)
 {
@@ -747,6 +950,9 @@ Vector<data_t> pow(const Vector<data_t>& vec, real_t exponent)
   return result;
 }
 
+/// @brief Compute square root of each element in a vector
+/// @param vec Input vector
+/// @returns Vector with square root values
 template <typename data_t>
 Vector<data_t> sqrt(const Vector<data_t>& vec)
 {
@@ -761,6 +967,11 @@ Vector<data_t> sqrt(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Round each element of a vector to a specified decimal place
+/// @param vec Input vector
+/// @param decimal Number of decimal places
+/// @param method Rounding method (default: NEAREST)
+/// @returns Vector with rounded values
 template <typename data_t>
 Vector<data_t> round(const Vector<data_t>& vec, const size_t& decimal, RoundingMethod_t method = NEAREST)
 {
@@ -772,6 +983,9 @@ Vector<data_t> round(const Vector<data_t>& vec, const size_t& decimal, RoundingM
   return result;
 }
 
+/// @brief Compute sum of all elements in a vector
+/// @param vec Input vector
+/// @returns Sum of elements
 template <typename data_t>
 data_t sum(const Vector<data_t>& vec)
 {
@@ -783,6 +997,10 @@ data_t sum(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Element-wise sum of two vectors of different types
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Vector with element-wise sum
 template <typename T1, typename T2>
 auto sum(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -798,6 +1016,9 @@ auto sum(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::d
   return result;
 }
 
+/// @brief Compute differences between consecutive elements
+/// @param vec Input vector
+/// @returns Vector of differences (length n-1)
 template <typename data_t>
 Vector<data_t> diff(const Vector<data_t>& vec)
 {
@@ -809,6 +1030,10 @@ Vector<data_t> diff(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Element-wise difference of two vectors of different types
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Vector with element-wise difference
 template <typename T1, typename T2>
 auto diff(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -824,6 +1049,10 @@ auto diff(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::
   return result;
 }
 
+/// @brief Element-wise multiplication of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Vector with element-wise products
 template <typename T1, typename T2>
 auto elmul(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -839,6 +1068,10 @@ auto elmul(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std:
   return result;
 }
 
+/// @brief Element-wise division of two vectors
+/// @param lhs Left-hand side vector (dividend)
+/// @param rhs Right-hand side vector (divisor)
+/// @returns Vector with element-wise quotients
 template <typename T1, typename T2>
 auto eldiv(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -854,6 +1087,10 @@ auto eldiv(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std:
   return result;
 }
 
+/// @brief Compute dot product of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Dot product (scalar value)
 template <typename T1, typename T2>
 real_t dot(const Vector<T1>& lhs, const Vector<T2>& rhs)
 {
@@ -868,6 +1105,10 @@ real_t dot(const Vector<T1>& lhs, const Vector<T2>& rhs)
   return result;
 }
 
+/// @brief Compute cross product of two 3D vectors
+/// @param lhs Left-hand side vector (must be 3D)
+/// @param rhs Right-hand side vector (must be 3D)
+/// @returns Cross product vector
 template <typename T1, typename T2>
 auto cross(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -883,6 +1124,10 @@ auto cross(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Vector<decltype(std:
                                static_cast<result_t>(lhs[1]) * static_cast<result_t>(rhs[0])});
 }
 
+/// @brief Compute outer product of two vectors
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @returns Matrix representing the outer product
 template <typename T1, typename T2>
 auto outer(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Matrix<decltype(std::declval<T1>() + std::declval<T2>())>
 {
@@ -902,6 +1147,9 @@ auto outer(const Vector<T1>& lhs, const Vector<T2>& rhs) -> Matrix<decltype(std:
   return result;
 }
 
+/// @brief Find maximum element in a vector
+/// @param vec Input vector
+/// @returns Maximum value
 template <typename data_t>
 data_t max(const Vector<data_t>& vec)
 {
@@ -913,6 +1161,9 @@ data_t max(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Find minimum element in a vector
+/// @param vec Input vector
+/// @returns Minimum value
 template <typename data_t>
 data_t min(const Vector<data_t>& vec)
 {
@@ -924,18 +1175,27 @@ data_t min(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Compute mean (average) of vector elements
+/// @param vec Input vector
+/// @returns Mean value
 template <typename data_t>
 real_t mean(const Vector<data_t>& vec)
 {
   return sum(vec) / static_cast<real_t>(vec.length());
 }
 
+/// @brief Compute standard deviation of vector elements
+/// @param vec Input vector
+/// @returns Standard deviation
 template <typename data_t>
 real_t std(const Vector<data_t>& vec)
 {
   return std::sqrt(var(vec));
 }
 
+/// @brief Compute variance of vector elements
+/// @param vec Input vector
+/// @returns Variance
 template <typename data_t>
 real_t var(const Vector<data_t>& vec)
 {
@@ -944,6 +1204,9 @@ real_t var(const Vector<data_t>& vec)
   return factor * sum(elmul(v, v));
 }
 
+/// @brief Check if all elements in a boolean vector are true
+/// @param vec Boolean vector
+/// @returns True if all elements are true, false otherwise
 inline bool all(const Vector<bool>& vec)
 {
   size_t len = vec.length();
@@ -955,6 +1218,9 @@ inline bool all(const Vector<bool>& vec)
   return true;
 }
 
+/// @brief Check if any element in a boolean vector is true
+/// @param vec Boolean vector
+/// @returns True if at least one element is true, false otherwise
 inline bool any(const Vector<bool>& vec)
 {
   size_t len = vec.length();
@@ -966,6 +1232,11 @@ inline bool any(const Vector<bool>& vec)
   return false;
 }
 
+/// @brief Element-wise fuzzy equality comparison with tolerance
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @param epsilon Tolerance value (default: EPSILON)
+/// @returns Boolean vector with comparison results
 inline Vector<bool> isFuzzyEqual(const Vector<real_t>& lhs, const Vector<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.length() != rhs.length()) {
@@ -979,6 +1250,11 @@ inline Vector<bool> isFuzzyEqual(const Vector<real_t>& lhs, const Vector<real_t>
   return result;
 }
 
+/// @brief Element-wise strict fuzzy greater-than comparison with tolerance
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @param epsilon Tolerance value (default: EPSILON)
+/// @returns Boolean vector with comparison results
 inline Vector<bool> isStrictFuzzyGreater(const Vector<real_t>& lhs, const Vector<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.length() != rhs.length()) {
@@ -992,6 +1268,11 @@ inline Vector<bool> isStrictFuzzyGreater(const Vector<real_t>& lhs, const Vector
   return result;
 }
 
+/// @brief Element-wise fuzzy greater-than-or-equal comparison with tolerance
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @param epsilon Tolerance value (default: EPSILON)
+/// @returns Boolean vector with comparison results
 inline Vector<bool> isFuzzyGreater(const Vector<real_t>& lhs, const Vector<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.length() != rhs.length()) {
@@ -1005,6 +1286,11 @@ inline Vector<bool> isFuzzyGreater(const Vector<real_t>& lhs, const Vector<real_
   return result;
 }
 
+/// @brief Element-wise strict fuzzy less-than comparison with tolerance
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @param epsilon Tolerance value (default: EPSILON)
+/// @returns Boolean vector with comparison results
 inline Vector<bool> isStrictFuzzySmaller(const Vector<real_t>& lhs, const Vector<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.length() != rhs.length()) {
@@ -1018,6 +1304,11 @@ inline Vector<bool> isStrictFuzzySmaller(const Vector<real_t>& lhs, const Vector
   return result;
 }
 
+/// @brief Element-wise fuzzy less-than-or-equal comparison with tolerance
+/// @param lhs Left-hand side vector
+/// @param rhs Right-hand side vector
+/// @param epsilon Tolerance value (default: EPSILON)
+/// @returns Boolean vector with comparison results
 inline Vector<bool> isFuzzySmaller(const Vector<real_t>& lhs, const Vector<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.length() != rhs.length()) {
@@ -1034,6 +1325,11 @@ inline Vector<bool> isFuzzySmaller(const Vector<real_t>& lhs, const Vector<real_
 #pragma endregion
 
 #ifdef __PRINT__
+/// @brief Convert a vector to a string representation
+/// @param vec Input vector
+/// @param decimal Number of decimal places (default: 3)
+/// @param method Rounding method (default: NEAREST)
+/// @returns String representation of the vector
 template <typename data_t>
 std::string to_string(const Vector<data_t>& vec, const size_t& decimal = 3, RoundingMethod_t method = NEAREST)
 {
@@ -1075,6 +1371,10 @@ std::string to_string(const Vector<data_t>& vec, const size_t& decimal = 3, Roun
   return oss.str();
 }
 
+/// @brief Output stream operator for vectors
+/// @param os Output stream
+/// @param vec Vector to output
+/// @returns Output stream
 template <typename data_t>
 std::ostream& operator<<(std::ostream& os, const Vector<data_t>& vec)
 {
@@ -1082,6 +1382,8 @@ std::ostream& operator<<(std::ostream& os, const Vector<data_t>& vec)
   return os;
 }
 
+/// @brief Print a vector to standard output
+/// @param vec Vector to print
 template <typename data_t>
 void print(const Vector<data_t>& vec)
 {
@@ -1095,6 +1397,9 @@ void print(const Vector<data_t>& vec)
 
 namespace std
 {
+/// @brief Convert a vector to a string (std namespace overload)
+/// @param vec Input vector
+/// @returns String representation of the vector
 template <typename data_t>
 std::string to_string(const mathlib::Vector<data_t>& vec)
 {

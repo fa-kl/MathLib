@@ -41,18 +41,29 @@ namespace mathlib
 template <typename data_t = real_t>
 class Matrix;
 
+/// @brief A class for matrices
 template <typename data_t>
 class Matrix
 {
 protected:
+  /// @brief The underlying data array (column-major order)
   std::unique_ptr<data_t[]> m_data;
+  /// @brief The dimensions of the matrix
   dim_t m_size;
 
 public:
+  /// @brief Creates an empty matrix
   Matrix() : m_data(nullptr), m_size({0, 0}) {}
 
+  /// @brief Creates a matrix with specified dimensions initialized to zero
+  /// @param rows Number of rows
+  /// @param cols Number of columns
   explicit Matrix(size_t rows, size_t cols) : m_data(std::make_unique<data_t[]>(rows * cols)), m_size({rows, cols}) {}
 
+  /// @brief Creates a matrix with specified dimensions filled with a value
+  /// @param rows Number of rows
+  /// @param cols Number of columns
+  /// @param value Value to fill the matrix with
   Matrix(size_t rows, size_t cols, data_t value) : m_data(std::make_unique<data_t[]>(rows * cols)), m_size({rows, cols})
   {
     size_t len = length();
@@ -61,6 +72,8 @@ public:
     }
   }
 
+  /// @brief Creates a matrix from a nested initializer list
+  /// @param values Nested initializer list of values (row-wise)
   Matrix(std::initializer_list<std::initializer_list<data_t>> values)
   {
     size_t rows = values.size();
@@ -88,6 +101,8 @@ public:
     }
   }
 
+  /// @brief Creates a matrix from an initializer list of column vectors
+  /// @param vectors Initializer list of column vectors
   Matrix(std::initializer_list<Vector<data_t>> vectors)
   {
     size_t cols = vectors.size();
@@ -113,6 +128,8 @@ public:
     }
   }
 
+  /// @brief Creates a matrix from a vector
+  /// @param vec Vector to convert to matrix
   explicit Matrix(const Vector<data_t>& vec) : m_data(std::make_unique<data_t[]>(vec.length())), m_size(vec.size())
   {
     for (size_t i = 0; i < vec.length(); ++i) {
@@ -120,6 +137,8 @@ public:
     }
   }
 
+  /// @brief Copy constructor
+  /// @param other Matrix to copy
   Matrix(const Matrix& other)
       : m_data(other.length() > 0 ? std::make_unique<data_t[]>(other.length()) : nullptr), m_size(other.m_size)
   {
@@ -128,10 +147,16 @@ public:
     }
   }
 
+  /// @brief Move constructor
+  /// @param other Matrix to move
   Matrix(Matrix&& other) noexcept : m_data(std::move(other.m_data)), m_size(other.m_size) { other.m_size = {0, 0}; }
 
+  /// @brief Destructor
   ~Matrix() = default;
 
+  /// @brief Copy assignment operator
+  /// @param other Matrix to copy
+  /// @returns Reference to this matrix
   Matrix& operator=(const Matrix& other)
   {
     if (this != &other) {
@@ -146,6 +171,9 @@ public:
     return *this;
   }
 
+  /// @brief Move assignment operator
+  /// @param other Matrix to move
+  /// @returns Reference to this matrix
   Matrix& operator=(Matrix&& other) noexcept
   {
     if (this != &other) {
@@ -156,20 +184,37 @@ public:
     return *this;
   }
 
+  /// @brief Get the size dimensions of the matrix
+  /// @returns Size as dim_t structure
   dim_t size() const { return m_size; }
 
+  /// @brief Get the total number of elements
+  /// @returns Total number of elements
   size_t length() const { return m_size.rows * m_size.cols; }
 
+  /// @brief Get the number of rows
+  /// @returns Number of rows
   size_t rows() const { return m_size.rows; }
 
+  /// @brief Get the number of columns
+  /// @returns Number of columns
   size_t cols() const { return m_size.cols; }
 
+  /// @brief Check if the matrix is empty
+  /// @returns True if empty, false otherwise
   bool isEmpty() const { return length() == 0; }
 
+  /// @brief Get pointer to underlying data
+  /// @returns Pointer to data array
   data_t* data() { return m_data.get(); }
 
+  /// @brief Get const pointer to underlying data
+  /// @returns Const pointer to data array
   const data_t* data() const { return m_data.get(); }
 
+  /// @brief Access element at linear index i (0-based indexing)
+  /// @param i Linear index
+  /// @returns Reference to element at index i
   data_t& operator[](const size_t i)
   {
     if (i < length()) {
@@ -178,6 +223,9 @@ public:
     throw IndexOutOfRangeError();
   }
 
+  /// @brief Access element at linear index i (0-based indexing)
+  /// @param i Linear index
+  /// @returns Const reference to element at index i
   const data_t& operator[](const size_t i) const
   {
     if (i < length()) {
@@ -186,6 +234,9 @@ public:
     throw IndexOutOfRangeError();
   }
 
+  /// @brief Access element at linear index i (1-based indexing, supports negative indices)
+  /// @param i Index (1-based, negative indices count from end)
+  /// @returns Reference to element at index i
   template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
   data_t& operator()(const int_t i)
   {
@@ -201,6 +252,9 @@ public:
     return m_data[idx];
   }
 
+  /// @brief Access element at linear index i (1-based indexing, supports negative indices)
+  /// @param i Index (1-based, negative indices count from end)
+  /// @returns Const reference to element at index i
   template <typename int_t, typename = std::enable_if_t<std::is_integral_v<int_t>>>
   const data_t& operator()(const int_t i) const
   {
@@ -216,6 +270,10 @@ public:
     return m_data[idx];
   }
 
+  /// @brief Access element at row and column (1-based indexing, supports negative indices)
+  /// @param row Row index (1-based, negative indices count from end)
+  /// @param col Column index (1-based, negative indices count from end)
+  /// @returns Reference to element at (row, col)
   template <typename int_t1,
             typename int_t2,
             typename = std::enable_if_t<std::is_integral_v<int_t1> && std::is_integral_v<int_t2>>>
@@ -236,6 +294,10 @@ public:
     return m_data[c * m_size.rows + r];
   }
 
+  /// @brief Access element at row and column (1-based indexing, supports negative indices)
+  /// @param row Row index (1-based, negative indices count from end)
+  /// @param col Column index (1-based, negative indices count from end)
+  /// @returns Const reference to element at (row, col)
   template <typename int_t1,
             typename int_t2,
             typename = std::enable_if_t<std::is_integral_v<int_t1> && std::is_integral_v<int_t2>>>
@@ -256,8 +318,12 @@ public:
     return m_data[c * m_size.rows + r];
   }
 
+  /// @brief Unary plus operator
+  /// @returns A copy of the matrix
   Matrix operator+() const { return Matrix(*this); }
 
+  /// @brief Unary minus operator (negate matrix)
+  /// @returns A negated copy of the matrix
   Matrix operator-() const
   {
     Matrix result(m_size.rows, m_size.cols);
@@ -273,18 +339,29 @@ public:
 
 #pragma region Matrix Constructor Methods
 
+/// @brief Create a matrix of zeros
+/// @param rows Number of rows
+/// @param cols Number of columns
+/// @returns Matrix filled with zeros
 template <typename data_t = real_t>
 Matrix<data_t> zeros(size_t rows, size_t cols)
 {
   return Matrix<data_t>(rows, cols);
 }
 
+/// @brief Create a matrix of ones
+/// @param rows Number of rows
+/// @param cols Number of columns
+/// @returns Matrix filled with ones
 template <typename data_t = real_t>
 Matrix<data_t> ones(size_t rows, size_t cols)
 {
   return Matrix<data_t>(rows, cols, static_cast<data_t>(1));
 }
 
+/// @brief Create an identity matrix
+/// @param n Size of the square matrix
+/// @returns Identity matrix of size n x n
 template <typename data_t = real_t>
 Matrix<data_t> eye(size_t n)
 {
@@ -295,6 +372,9 @@ Matrix<data_t> eye(size_t n)
   return result;
 }
 
+/// @brief Create a diagonal matrix from an initializer list
+/// @param values Diagonal values
+/// @returns Diagonal matrix
 template <typename data_t>
 Matrix<data_t> diag(std::initializer_list<data_t> values)
 {
@@ -308,6 +388,9 @@ Matrix<data_t> diag(std::initializer_list<data_t> values)
   return result;
 }
 
+/// @brief Create a diagonal matrix from a vector
+/// @param vec Vector containing diagonal values
+/// @returns Diagonal matrix
 template <typename data_t>
 Matrix<data_t> diag(const Vector<data_t>& vec)
 {
@@ -319,6 +402,9 @@ Matrix<data_t> diag(const Vector<data_t>& vec)
   return result;
 }
 
+/// @brief Extract the diagonal of a matrix as a vector
+/// @param mat Input matrix
+/// @returns Vector containing diagonal elements
 template <typename data_t>
 Vector<data_t> diag(const Matrix<data_t>& mat)
 {
@@ -334,6 +420,10 @@ Vector<data_t> diag(const Matrix<data_t>& mat)
 
 #pragma region Arithmetic Operators
 
+/// @brief Add two matrices element-wise
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of element-wise addition
 template <typename data_t>
 Matrix<data_t> operator+(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -348,6 +438,10 @@ Matrix<data_t> operator+(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Add two matrices of different types element-wise
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of element-wise addition with appropriate result type
 template <typename T1, typename T2>
 auto operator+(const Matrix<T1>& lhs,
                const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() + std::declval<T2>())>
@@ -364,6 +458,10 @@ auto operator+(const Matrix<T1>& lhs,
   return result;
 }
 
+/// @brief Add a scalar to all elements of a matrix
+/// @param lhs Matrix
+/// @param rhs Scalar value
+/// @returns Result matrix
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator+(const Matrix<data_t>& lhs, const scalar_t& rhs)
 {
@@ -375,6 +473,10 @@ Matrix<data_t> operator+(const Matrix<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Add a scalar to all elements of a matrix
+/// @param lhs Scalar value
+/// @param rhs Matrix
+/// @returns Result matrix
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator+(const scalar_t& lhs, const Matrix<data_t>& rhs)
 {
@@ -386,6 +488,10 @@ Matrix<data_t> operator+(const scalar_t& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Subtract two matrices element-wise
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of element-wise subtraction
 template <typename data_t>
 Matrix<data_t> operator-(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -400,6 +506,10 @@ Matrix<data_t> operator-(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Subtract two matrices of different types element-wise
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of element-wise subtraction with appropriate result type
 template <typename T1, typename T2>
 auto operator-(const Matrix<T1>& lhs,
                const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() - std::declval<T2>())>
@@ -416,6 +526,10 @@ auto operator-(const Matrix<T1>& lhs,
   return result;
 }
 
+/// @brief Subtract a scalar from all elements of a matrix
+/// @param lhs Matrix
+/// @param rhs Scalar value
+/// @returns Result matrix
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator-(const Matrix<data_t>& lhs, const scalar_t& rhs)
 {
@@ -427,6 +541,10 @@ Matrix<data_t> operator-(const Matrix<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Subtract a matrix from a scalar
+/// @param lhs Scalar value
+/// @param rhs Matrix
+/// @returns Result matrix
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator-(const scalar_t& lhs, const Matrix<data_t>& rhs)
 {
@@ -438,6 +556,10 @@ Matrix<data_t> operator-(const scalar_t& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Perform matrix multiplication
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of matrix multiplication
 template <typename data_t>
 Matrix<data_t> operator*(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -457,6 +579,10 @@ Matrix<data_t> operator*(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Perform matrix multiplication of two matrices with different types
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result of matrix multiplication
 template <typename T1, typename T2>
 auto operator*(const Matrix<T1>& lhs,
                const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() * std::declval<T2>())>
@@ -478,6 +604,10 @@ auto operator*(const Matrix<T1>& lhs,
   return result;
 }
 
+/// @brief Multiply a matrix by a vector
+/// @param lhs Matrix
+/// @param rhs Vector
+/// @returns Result vector
 template <typename data_t>
 Vector<data_t> operator*(const Matrix<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -495,6 +625,10 @@ Vector<data_t> operator*(const Matrix<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Multiply a matrix by a vector of different type
+/// @param lhs Matrix
+/// @param rhs Vector
+/// @returns Result vector
 template <typename T1, typename T2>
 auto operator*(const Matrix<T1>& lhs,
                const Vector<T2>& rhs) -> Vector<decltype(std::declval<T1>() * std::declval<T2>())>
@@ -514,6 +648,10 @@ auto operator*(const Matrix<T1>& lhs,
   return result;
 }
 
+/// @brief Multiply a vector by a matrix
+/// @param lhs Vector
+/// @param rhs Matrix
+/// @returns Result matrix
 template <typename data_t>
 Matrix<data_t> operator*(const Vector<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -529,6 +667,10 @@ Matrix<data_t> operator*(const Vector<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Multiply a vector by a matrix of different type
+/// @param lhs Vector
+/// @param rhs Matrix
+/// @returns Result matrix
 template <typename T1, typename T2>
 auto operator*(const Vector<T1>& lhs,
                const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() * std::declval<T2>())>
@@ -546,6 +688,10 @@ auto operator*(const Vector<T1>& lhs,
   return result;
 }
 
+/// @brief Multiply all elements of a matrix by a scalar
+/// @param lhs Matrix
+/// @param rhs Scalar value
+/// @returns Result matrix
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator*(const Matrix<data_t>& lhs, const scalar_t& rhs)
 {
@@ -557,6 +703,10 @@ Matrix<data_t> operator*(const Matrix<data_t>& lhs, const scalar_t& rhs)
   return result;
 }
 
+/// @brief Multiply all elements of a matrix by a scalar
+/// @param lhs Scalar value
+/// @param rhs Matrix
+/// @returns Result matrix
 template <typename scalar_t, typename data_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator*(const scalar_t& lhs, const Matrix<data_t>& rhs)
 {
@@ -568,6 +718,10 @@ Matrix<data_t> operator*(const scalar_t& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Divide all elements of a matrix by a scalar
+/// @param lhs Matrix
+/// @param rhs Scalar value (divisor)
+/// @returns Result matrix
 template <typename data_t, typename scalar_t, typename = std::enable_if_t<is_scalar_type_v<scalar_t>>>
 Matrix<data_t> operator/(const Matrix<data_t>& lhs, const scalar_t& rhs)
 {
@@ -586,6 +740,10 @@ Matrix<data_t> operator/(const Matrix<data_t>& lhs, const scalar_t& rhs)
 
 #pragma region Logical Operators
 
+/// @brief Element-wise equality comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator==(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -600,6 +758,10 @@ Matrix<bool> operator==(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise inequality comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator!=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -614,6 +776,10 @@ Matrix<bool> operator!=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise greater-than comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator>(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -628,6 +794,10 @@ Matrix<bool> operator>(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise greater-than-or-equal comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator>=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -642,6 +812,10 @@ Matrix<bool> operator>=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise less-than comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator<(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -656,6 +830,10 @@ Matrix<bool> operator<(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise less-than-or-equal comparison of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Boolean matrix with comparison results
 template <typename data_t>
 Matrix<bool> operator<=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -670,6 +848,10 @@ Matrix<bool> operator<=(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Element-wise logical AND of two boolean matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result boolean matrix
 inline Matrix<bool> operator&&(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -683,6 +865,10 @@ inline Matrix<bool> operator&&(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
   return result;
 }
 
+/// @brief Element-wise logical OR of two boolean matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result boolean matrix
 inline Matrix<bool> operator||(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -696,6 +882,10 @@ inline Matrix<bool> operator||(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
   return result;
 }
 
+/// @brief Element-wise logical XOR of two boolean matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Result boolean matrix
 inline Matrix<bool> operator^(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -713,36 +903,54 @@ inline Matrix<bool> operator^(const Matrix<bool>& lhs, const Matrix<bool>& rhs)
 
 #pragma region Methods
 
+/// @brief Get the number of rows in a matrix
+/// @param mat Input matrix
+/// @returns Number of rows
 template <typename data_t>
 size_t rows(const Matrix<data_t>& mat)
 {
   return mat.rows();
 }
 
+/// @brief Get the number of columns in a matrix
+/// @param mat Input matrix
+/// @returns Number of columns
 template <typename data_t>
 size_t cols(const Matrix<data_t>& mat)
 {
   return mat.cols();
 }
 
+/// @brief Get the size dimensions of a matrix
+/// @param mat Input matrix
+/// @returns Size as dim_t structure
 template <typename data_t>
 dim_t size(const Matrix<data_t>& mat)
 {
   return mat.size();
 }
 
+/// @brief Get the total number of elements in a matrix
+/// @param mat Input matrix
+/// @returns Total number of elements
 template <typename data_t>
 size_t length(const Matrix<data_t>& mat)
 {
   return mat.length();
 }
 
+/// @brief Check if a matrix is empty
+/// @param mat Input matrix
+/// @returns True if empty, false otherwise
 template <typename data_t>
 bool isEmpty(const Matrix<data_t>& mat)
 {
   return mat.isEmpty();
 }
 
+/// @brief Transpose a matrix (swap rows and columns)
+/// @param mat Input matrix
+/// @returns Transposed matrix
 template <typename data_t>
 Matrix<data_t> transpose(const Matrix<data_t>& mat)
 {
@@ -755,6 +963,9 @@ Matrix<data_t> transpose(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute the trace of a matrix (sum of diagonal elements)
+/// @param mat Input matrix
+/// @returns Trace value
 template <typename data_t>
 data_t trace(const Matrix<data_t>& mat)
 {
@@ -766,6 +977,9 @@ data_t trace(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute absolute value of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with absolute values
 template <typename data_t>
 Matrix<data_t> abs(const Matrix<data_t>& mat)
 {
@@ -777,6 +991,9 @@ Matrix<data_t> abs(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute exponential of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with exponential values
 template <typename data_t>
 Matrix<data_t> exp(const Matrix<data_t>& mat)
 {
@@ -788,6 +1005,9 @@ Matrix<data_t> exp(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute natural logarithm of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with logarithmic values
 template <typename data_t>
 Matrix<data_t> log(const Matrix<data_t>& mat)
 {
@@ -799,6 +1019,9 @@ Matrix<data_t> log(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute sine of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with sine values
 template <typename data_t>
 Matrix<data_t> sin(const Matrix<data_t>& mat)
 {
@@ -810,6 +1033,9 @@ Matrix<data_t> sin(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute cosine of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with cosine values
 template <typename data_t>
 Matrix<data_t> cos(const Matrix<data_t>& mat)
 {
@@ -821,6 +1047,9 @@ Matrix<data_t> cos(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute tangent of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with tangent values
 template <typename data_t>
 Matrix<data_t> tan(const Matrix<data_t>& mat)
 {
@@ -832,6 +1061,9 @@ Matrix<data_t> tan(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute arcsine of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with arcsine values
 template <typename data_t>
 Matrix<data_t> asin(const Matrix<data_t>& mat)
 {
@@ -843,6 +1075,9 @@ Matrix<data_t> asin(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute arccosine of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with arccosine values
 template <typename data_t>
 Matrix<data_t> acos(const Matrix<data_t>& mat)
 {
@@ -854,6 +1089,9 @@ Matrix<data_t> acos(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute arctangent of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with arctangent values
 template <typename data_t>
 Matrix<data_t> atan(const Matrix<data_t>& mat)
 {
@@ -865,6 +1103,10 @@ Matrix<data_t> atan(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Raise each element of a matrix to a power (element-wise)
+/// @param mat Input matrix
+/// @param exponent Power exponent
+/// @returns Matrix with powered values
 template <typename data_t>
 Matrix<data_t> elpow(const Matrix<data_t>& mat, real_t exponent)
 {
@@ -890,6 +1132,9 @@ Matrix<data_t> pow(const Matrix<data_t>& mat, real_t exponent)
 }
 */
 
+/// @brief Compute square root of each element in a matrix
+/// @param mat Input matrix
+/// @returns Matrix with square root values
 template <typename data_t>
 Matrix<data_t> sqrt(const Matrix<data_t>& mat)
 {
@@ -904,6 +1149,11 @@ Matrix<data_t> sqrt(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Round each element of a matrix to a specified decimal place
+/// @param mat Input matrix
+/// @param decimal Number of decimal places
+/// @param method Rounding method (default: NEAREST)
+/// @returns Matrix with rounded values
 template <typename data_t>
 Matrix<data_t> round(const Matrix<data_t>& mat, const size_t& decimal, RoundingMethod_t method = NEAREST)
 {
@@ -915,6 +1165,9 @@ Matrix<data_t> round(const Matrix<data_t>& mat, const size_t& decimal, RoundingM
   return result;
 }
 
+/// @brief Compute sum of all elements in a matrix
+/// @param mat Input matrix
+/// @returns Sum of all elements
 template <typename data_t>
 data_t sum(const Matrix<data_t>& mat)
 {
@@ -926,6 +1179,10 @@ data_t sum(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Compute sum along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with sums along the specified dimension
 template <typename data_t>
 Matrix<data_t> sum(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -954,6 +1211,10 @@ Matrix<data_t> sum(const Matrix<data_t>& mat, const size_t dim)
   throw MathLibError("dim can only be 1 or 2");
 }
 
+/// @brief Element-wise multiplication of two matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @returns Matrix with element-wise products
 template <typename T1, typename T2>
 auto elmul(const Matrix<T1>& lhs, const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() * std::declval<T2>())>
 {
@@ -969,6 +1230,10 @@ auto elmul(const Matrix<T1>& lhs, const Matrix<T2>& rhs) -> Matrix<decltype(std:
   return result;
 }
 
+/// @brief Element-wise division of two matrices
+/// @param lhs Left-hand side matrix (dividend)
+/// @param rhs Right-hand side matrix (divisor)
+/// @returns Matrix with element-wise quotients
 template <typename T1, typename T2>
 auto eldiv(const Matrix<T1>& lhs, const Matrix<T2>& rhs) -> Matrix<decltype(std::declval<T1>() / std::declval<T2>())>
 {
@@ -987,6 +1252,9 @@ auto eldiv(const Matrix<T1>& lhs, const Matrix<T2>& rhs) -> Matrix<decltype(std:
   return result;
 }
 
+/// @brief Find maximum element in a matrix
+/// @param mat Input matrix
+/// @returns Maximum value
 template <typename data_t>
 data_t max(const Matrix<data_t>& mat)
 {
@@ -998,6 +1266,10 @@ data_t max(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Find maximum along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with maximum values along the specified dimension
 template <typename data_t>
 Matrix<data_t> max(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -1026,6 +1298,9 @@ Matrix<data_t> max(const Matrix<data_t>& mat, const size_t dim)
   throw MathLibError("dim can only be 1 or 2");
 }
 
+/// @brief Find minimum element in a matrix
+/// @param mat Input matrix
+/// @returns Minimum value
 template <typename data_t>
 data_t min(const Matrix<data_t>& mat)
 {
@@ -1037,6 +1312,10 @@ data_t min(const Matrix<data_t>& mat)
   return result;
 }
 
+/// @brief Find minimum along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with minimum values along the specified dimension
 template <typename data_t>
 Matrix<data_t> min(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -1065,6 +1344,9 @@ Matrix<data_t> min(const Matrix<data_t>& mat, const size_t dim)
   throw MathLibError("dim can only be 1 or 2");
 }
 
+/// @brief Compute mean (average) of all matrix elements
+/// @param mat Input matrix
+/// @returns Mean value
 template <typename data_t>
 real_t mean(const Matrix<data_t>& mat)
 {
@@ -1074,6 +1356,10 @@ real_t mean(const Matrix<data_t>& mat)
   return static_cast<real_t>(sum(mat)) / static_cast<real_t>(mat.length());
 }
 
+/// @brief Compute mean along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with mean values along the specified dimension
 template <typename data_t>
 Matrix<real_t> mean(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -1089,6 +1375,9 @@ Matrix<real_t> mean(const Matrix<data_t>& mat, const size_t dim)
   throw MathLibError("dim can only be 1 or 2");
 }
 
+/// @brief Compute standard deviation of all matrix elements
+/// @param mat Input matrix
+/// @returns Standard deviation
 template <typename data_t>
 real_t std(const Matrix<data_t>& mat)
 {
@@ -1098,6 +1387,10 @@ real_t std(const Matrix<data_t>& mat)
   return std::sqrt(var(mat));
 }
 
+/// @brief Compute standard deviation along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with standard deviation values along the specified dimension
 template <typename data_t>
 Matrix<real_t> std(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -1107,6 +1400,9 @@ Matrix<real_t> std(const Matrix<data_t>& mat, const size_t dim)
   return sqrt(var(mat, dim));
 }
 
+/// @brief Compute variance of all matrix elements
+/// @param mat Input matrix
+/// @returns Variance
 template <typename data_t>
 real_t var(const Matrix<data_t>& mat)
 {
@@ -1123,6 +1419,10 @@ real_t var(const Matrix<data_t>& mat)
   return sum_sq_diff / static_cast<real_t>(len);
 }
 
+/// @brief Compute variance along a specific dimension
+/// @param mat Input matrix
+/// @param dim Dimension (1 for column-wise, 2 for row-wise)
+/// @returns Matrix with variance values along the specified dimension
 template <typename data_t>
 Matrix<real_t> var(const Matrix<data_t>& mat, const size_t dim)
 {
@@ -1155,6 +1455,9 @@ Matrix<real_t> var(const Matrix<data_t>& mat, const size_t dim)
   throw MathLibError("dim can only be 1 or 2");
 }
 
+/// @brief Check if all elements in a boolean matrix are true
+/// @param mat Boolean matrix
+/// @returns True if all elements are true, false otherwise
 inline bool all(const Matrix<bool>& mat)
 {
   size_t len = mat.length();
@@ -1166,6 +1469,9 @@ inline bool all(const Matrix<bool>& mat)
   return true;
 }
 
+/// @brief Check if any element in a boolean matrix is true
+/// @param mat Boolean matrix
+/// @returns True if at least one element is true, false otherwise
 inline bool any(const Matrix<bool>& mat)
 {
   size_t len = mat.length();
@@ -1177,6 +1483,10 @@ inline bool any(const Matrix<bool>& mat)
   return false;
 }
 
+/// @brief Horizontally concatenate two matrices
+/// @param lhs Left matrix
+/// @param rhs Right matrix
+/// @returns Concatenated matrix
 template <typename data_t>
 Matrix<data_t> hcat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -1197,6 +1507,10 @@ Matrix<data_t> hcat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Vertically concatenate two matrices
+/// @param lhs Top matrix
+/// @param rhs Bottom matrix
+/// @returns Concatenated matrix
 template <typename data_t>
 Matrix<data_t> vcat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -1217,6 +1531,10 @@ Matrix<data_t> vcat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Horizontally concatenate a matrix and a vector
+/// @param lhs Matrix
+/// @param rhs Vector
+/// @returns Concatenated matrix
 template <typename data_t>
 Matrix<data_t> hcat(const Matrix<data_t>& lhs, const Vector<data_t>& rhs)
 {
@@ -1237,6 +1555,10 @@ Matrix<data_t> hcat(const Matrix<data_t>& lhs, const Vector<data_t>& rhs)
   return result;
 }
 
+/// @brief Horizontally concatenate a vector and a matrix
+/// @param lhs Vector
+/// @param rhs Matrix
+/// @returns Concatenated matrix
 template <typename data_t>
 Matrix<data_t> hcat(const Vector<data_t>& lhs, const Matrix<data_t>& rhs)
 {
@@ -1256,6 +1578,11 @@ Matrix<data_t> hcat(const Vector<data_t>& lhs, const Matrix<data_t>& rhs)
   return result;
 }
 
+/// @brief Concatenate two matrices along a specified dimension
+/// @param lhs First matrix
+/// @param rhs Second matrix
+/// @param dim Dimension (1 for vertical, 2 for horizontal)
+/// @returns Concatenated matrix
 template <typename data_t>
 Matrix<data_t> cat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs, size_t dim)
 {
@@ -1268,12 +1595,21 @@ Matrix<data_t> cat(const Matrix<data_t>& lhs, const Matrix<data_t>& rhs, size_t 
   }
 }
 
+/// @brief Compute the Frobenius norm of a matrix
+/// @param mat Input matrix
+/// @param p Norm parameter (default: 2)
+/// @returns Frobenius norm
 template <typename data_t>
 real_t norm(const Matrix<data_t>& mat, real_t p = 2.0)
 {
   return std::sqrt(static_cast<real_t>(trace(transpose(mat) * mat)));
 }
 
+/// @brief Compute vector norms along a specific dimension
+/// @param mat Input matrix
+/// @param p Norm parameter (default: 2)
+/// @param dim Dimension (default: 1)
+/// @returns Matrix with norms along the specified dimension
 template <typename data_t>
 Matrix<data_t> vecnorm(const Matrix<data_t>& mat, real_t p = 2.0, size_t dim = 1)
 {
@@ -1300,6 +1636,11 @@ Matrix<data_t> vecnorm(const Matrix<data_t>& mat, real_t p = 2.0, size_t dim = 1
   return elpow(sum(elpow(abs(mat), p), dim), 1.0 / p);
 }
 
+/// @brief Compute dot product along a specific dimension
+/// @param A First matrix
+/// @param B Second matrix
+/// @param dim Dimension (default: 1)
+/// @returns Matrix with dot products along the specified dimension
 template <typename data_t>
 Matrix<real_t> dot(const Matrix<data_t>& A, const Matrix<data_t>& B, size_t dim = 1)
 {
@@ -1338,6 +1679,11 @@ Matrix<real_t> dot(const Matrix<data_t>& A, const Matrix<data_t>& B, size_t dim 
   }
 }
 
+/// @brief Normalize a matrix along a specific dimension
+/// @param mat Input matrix
+/// @param p Norm parameter (default: 2)
+/// @param dim Dimension (default: 1 for columns)
+/// @returns Normalized matrix
 template <typename data_t>
 Matrix<data_t> normalize(const Matrix<data_t>& mat, int p = 2, size_t dim = 1)
 {
@@ -1374,6 +1720,11 @@ Matrix<data_t> normalize(const Matrix<data_t>& mat, int p = 2, size_t dim = 1)
   }
 }
 
+/// @brief Compute dot product between two columns of a matrix
+/// @param mat Input matrix
+/// @param col1 First column index (1-based)
+/// @param col2 Second column index (1-based)
+/// @returns Dot product of the two columns
 template <typename data_t>
 data_t colDot(const Matrix<data_t>& mat, index_t col1, index_t col2)
 {
@@ -1390,6 +1741,11 @@ data_t colDot(const Matrix<data_t>& mat, index_t col1, index_t col2)
   return result;
 }
 
+/// @brief Compute dot product between two rows of a matrix
+/// @param mat Input matrix
+/// @param row1 First row index (1-based)
+/// @param row2 Second row index (1-based)
+/// @returns Dot product of the two rows
 template <typename data_t>
 data_t rowDot(const Matrix<data_t>& mat, index_t row1, index_t row2)
 {
@@ -1406,6 +1762,10 @@ data_t rowDot(const Matrix<data_t>& mat, index_t row1, index_t row2)
   return result;
 }
 
+/// @brief Orthogonalize matrix columns using Gram-Schmidt process
+/// @param A Input matrix
+/// @param tol Tolerance for considering vectors as zero (default: EPSILON)
+/// @returns Matrix with orthonormal columns
 template <typename data_t>
 Matrix<data_t> orth(const Matrix<data_t>& A, real_t tol = EPSILON)
 {
@@ -1471,6 +1831,10 @@ Matrix<data_t> orth(const Matrix<data_t>& A, real_t tol = EPSILON)
   return result;
 }
 
+/// @brief Compute the rank of a matrix
+/// @param mat Input matrix
+/// @param tol Tolerance for considering singular values as zero (default: EPSILON)
+/// @returns Rank of the matrix
 template <typename data_t>
 size_t rank(const Matrix<data_t>& mat, real_t tol = EPSILON)
 {
@@ -1527,17 +1891,26 @@ size_t rank(const Matrix<data_t>& mat, real_t tol = EPSILON)
   return r;
 }
 
+/// @brief Check if a matrix has full rank
+/// @param mat Input matrix
+/// @param tol Tolerance for considering singular values as zero (default: EPSILON)
+/// @returns True if matrix has full rank, false otherwise
 template <typename data_t>
 bool isFullRank(const Matrix<data_t>& mat, real_t tol = EPSILON)
 {
   return rank(mat, tol) == std::min(mat.rows(), mat.cols());
 }
 
+/// @brief Structure to hold QR decomposition results
 struct QRDecomposition {
-  Matrix<real_t> Q;
-  Matrix<real_t> R;
+  Matrix<real_t> Q;  ///< Orthogonal matrix Q
+  Matrix<real_t> R;  ///< Upper triangular matrix R
 };
 
+/// @brief Compute QR decomposition of a matrix
+/// @param A Input matrix (must have rows >= cols)
+/// @param checkRank Check if matrix has full rank (default: true)
+/// @returns QRDecomposition structure containing Q and R
 template<typename data_t>
 QRDecomposition qr(const Matrix<data_t>& A, bool checkRank = true)
 {
@@ -1596,14 +1969,16 @@ QRDecomposition qr(const Matrix<data_t>& A, bool checkRank = true)
 }
 
 
+/// @brief Structure to hold eigenvalue decomposition results
 struct EigenDecomposition {
-  Matrix<real_t> V; // eigenvectors
-  Matrix<real_t> D; // eigenvalues on diagonal
+  Matrix<real_t> V; ///< Eigenvector matrix (columns are eigenvectors)
+  Matrix<real_t> D; ///< Diagonal matrix with eigenvalues on diagonal
 };
 
+/// @brief Structure to hold eigenvalue and eigenvector results
 struct EigenResult {
-  Vector<real_t> values; // eigenvalues
-  std::vector<Vector<real_t>> vectors; // eigenvectors
+  Vector<real_t> values; ///< Eigenvalues
+  std::vector<Vector<real_t>> vectors; ///< Eigenvectors
 };
 
 template<typename data_t>
@@ -1653,6 +2028,11 @@ Vector<real_t> eigvals(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t
   return eigenvalues;
 }
 
+/// @brief Compute eigenvalue decomposition of a matrix (eigenvalues and eigenvectors)
+/// @param mat Input square matrix
+/// @param max_iter Maximum number of iterations (default: 1000)
+/// @param tol Convergence tolerance (default: EPSILON)
+/// @returns EigenDecomposition structure containing eigenvector matrix V and diagonal eigenvalue matrix D
 template<typename data_t>
 EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = EPSILON)
 {
@@ -1704,6 +2084,11 @@ EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, 
   return result;
 }
 
+/// @brief Compute eigenvalues and eigenvectors of a matrix
+/// @param mat Input square matrix
+/// @param max_iter Maximum number of iterations (default: 1000)
+/// @param tol Convergence tolerance (default: EPSILON)
+/// @returns EigenResult structure containing eigenvalues and eigenvectors
 template<typename data_t>
 EigenResult eig(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = EPSILON)
 {
@@ -1741,6 +2126,11 @@ EigenResult eig(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = 
   return result;
 }
 
+/// @brief Element-wise fuzzy equality comparison for matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @param epsilon Tolerance for comparison (default: EPSILON)
+/// @returns Matrix of bool with true where elements are approximately equal
 inline Matrix<bool>
 isFuzzyEqual(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
@@ -1755,6 +2145,11 @@ isFuzzyEqual(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilo
   return result;
 }
 
+/// @brief Element-wise fuzzy greater-than-or-equal comparison for matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @param epsilon Tolerance for comparison (default: EPSILON)
+/// @returns Matrix of bool with true where lhs elements are greater than or approximately equal to rhs
 inline Matrix<bool> isFuzzyGreater(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -1768,6 +2163,11 @@ inline Matrix<bool> isFuzzyGreater(const Matrix<real_t>& lhs, const Matrix<real_
   return result;
 }
 
+/// @brief Element-wise fuzzy less-than-or-equal comparison for matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @param epsilon Tolerance for comparison (default: EPSILON)
+/// @returns Matrix of bool with true where lhs elements are less than or approximately equal to rhs
 inline Matrix<bool> isFuzzySmaller(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -1781,6 +2181,11 @@ inline Matrix<bool> isFuzzySmaller(const Matrix<real_t>& lhs, const Matrix<real_
   return result;
 }
 
+/// @brief Element-wise strict fuzzy greater-than comparison for matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @param epsilon Tolerance for comparison (default: EPSILON)
+/// @returns Matrix of bool with true where lhs elements are strictly greater than rhs (not approximately equal)
 inline Matrix<bool> isStrictFuzzyGreater(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -1794,6 +2199,11 @@ inline Matrix<bool> isStrictFuzzyGreater(const Matrix<real_t>& lhs, const Matrix
   return result;
 }
 
+/// @brief Element-wise strict fuzzy less-than comparison for matrices
+/// @param lhs Left-hand side matrix
+/// @param rhs Right-hand side matrix
+/// @param epsilon Tolerance for comparison (default: EPSILON)
+/// @returns Matrix of bool with true where lhs elements are strictly less than rhs (not approximately equal)
 inline Matrix<bool> isStrictFuzzySmaller(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
@@ -1810,6 +2220,11 @@ inline Matrix<bool> isStrictFuzzySmaller(const Matrix<real_t>& lhs, const Matrix
 #pragma endregion
 
 #ifdef __PRINT__
+/// @brief Convert matrix to string representation
+/// @param mat Input matrix
+/// @param decimal Number of decimal places (default: 3)
+/// @param method Rounding method (default: NEAREST)
+/// @returns String representation of the matrix
 template <typename data_t>
 std::string to_string(const Matrix<data_t>& mat, const size_t& decimal = 3, RoundingMethod_t method = NEAREST)
 {
@@ -1853,6 +2268,10 @@ std::string to_string(const Matrix<data_t>& mat, const size_t& decimal = 3, Roun
   return oss.str();
 }
 
+/// @brief Stream insertion operator for matrix
+/// @param os Output stream
+/// @param mat Matrix to output
+/// @returns Reference to the output stream
 template <typename data_t>
 std::ostream& operator<<(std::ostream& os, const Matrix<data_t>& mat)
 {
@@ -1860,6 +2279,8 @@ std::ostream& operator<<(std::ostream& os, const Matrix<data_t>& mat)
   return os;
 }
 
+/// @brief Print matrix to standard output
+/// @param mat Matrix to print
 template <typename data_t>
 void print(const Matrix<data_t>& mat)
 {
@@ -1872,6 +2293,9 @@ void print(const Matrix<data_t>& mat)
 #ifdef __PRINT__
 namespace std
 {
+/// @brief Convert matrix to string (std namespace overload)
+/// @param mat Input matrix
+/// @returns String representation of the matrix
 template <typename data_t>
 std::string to_string(const mathlib::Matrix<data_t>& mat)
 {
