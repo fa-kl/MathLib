@@ -1428,7 +1428,7 @@ Matrix<real_t> var(const Matrix<data_t>& mat, const size_t dim)
 {
   if (dim == 1) {
     Matrix<real_t> means = mean(mat, dim);
-    Matrix<real_t> result(1, mat.cols());    
+    Matrix<real_t> result(1, mat.cols());
     for (index_t c = 1; c <= static_cast<index_t>(mat.cols()); ++c) {
       real_t sum_sq_diff = 0.0;
       for (index_t r = 1; r <= static_cast<index_t>(mat.rows()); ++r) {
@@ -1441,7 +1441,7 @@ Matrix<real_t> var(const Matrix<data_t>& mat, const size_t dim)
   }
   if (dim == 2) {
     Matrix<real_t> means = mean(mat, dim);
-    Matrix<real_t> result(mat.rows(), 1);    
+    Matrix<real_t> result(mat.rows(), 1);
     for (index_t r = 1; r <= static_cast<index_t>(mat.rows()); ++r) {
       real_t sum_sq_diff = 0.0;
       for (index_t c = 1; c <= static_cast<index_t>(mat.cols()); ++c) {
@@ -1911,7 +1911,7 @@ struct QRDecomposition {
 /// @param A Input matrix (must have rows >= cols)
 /// @param checkRank Check if matrix has full rank (default: true)
 /// @returns QRDecomposition structure containing Q and R
-template<typename data_t>
+template <typename data_t>
 QRDecomposition qr(const Matrix<data_t>& A, bool checkRank = true)
 {
   size_t m = A.rows();
@@ -1968,42 +1968,41 @@ QRDecomposition qr(const Matrix<data_t>& A, bool checkRank = true)
   return result;
 }
 
-
 /// @brief Structure to hold eigenvalue decomposition results
 struct EigenDecomposition {
-  Matrix<real_t> V; ///< Eigenvector matrix (columns are eigenvectors)
-  Matrix<real_t> D; ///< Diagonal matrix with eigenvalues on diagonal
+  Matrix<real_t> V;  ///< Eigenvector matrix (columns are eigenvectors)
+  Matrix<real_t> D;  ///< Diagonal matrix with eigenvalues on diagonal
 };
 
 /// @brief Structure to hold eigenvalue and eigenvector results
 struct EigenResult {
-  Vector<real_t> values; ///< Eigenvalues
-  std::vector<Vector<real_t>> vectors; ///< Eigenvectors
+  Vector<real_t> values;                ///< Eigenvalues
+  std::vector<Vector<real_t>> vectors;  ///< Eigenvectors
 };
 
-template<typename data_t>
+template <typename data_t>
 Vector<real_t> eigvals(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = EPSILON)
 {
   if (mat.rows() != mat.cols()) {
     throw MathLibError("Eigenvalue computation requires square matrix");
   }
-  
+
   size_t n = mat.rows();
   if (n == 0) {
     return Vector<real_t>(0);
   }
-  
+
   // QR algorithm: iteratively compute A_k = Q_k * R_k, then A_{k+1} = R_k * Q_k
   // The diagonal converges to eigenvalues
   Matrix<real_t> A(mat);
-  
+
   for (size_t iter = 0; iter < max_iter; ++iter) {
     // Perform QR decomposition
     QRDecomposition qr_result = qr(A, false);
-    
+
     // Form A_{k+1} = R * Q
     A = qr_result.R * qr_result.Q;
-    
+
     // Check convergence: off-diagonal elements should approach zero
     real_t off_diag_sum = 0.0;
     for (size_t i = 0; i < n; ++i) {
@@ -2013,18 +2012,18 @@ Vector<real_t> eigvals(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t
         }
       }
     }
-    
+
     if (off_diag_sum < tol) {
       break;
     }
   }
-  
+
   // Extract eigenvalues from diagonal
   Vector<real_t> eigenvalues(n);
   for (size_t i = 0; i < n; ++i) {
     eigenvalues[i] = A[i * n + i];
   }
-  
+
   return eigenvalues;
 }
 
@@ -2033,13 +2032,13 @@ Vector<real_t> eigvals(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t
 /// @param max_iter Maximum number of iterations (default: 1000)
 /// @param tol Convergence tolerance (default: EPSILON)
 /// @returns EigenDecomposition structure containing eigenvector matrix V and diagonal eigenvalue matrix D
-template<typename data_t>
+template <typename data_t>
 EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = EPSILON)
 {
   if (mat.rows() != mat.cols()) {
     throw MathLibError("Eigenvalue computation requires square matrix");
   }
-  
+
   size_t n = mat.rows();
   if (n == 0) {
     EigenDecomposition result;
@@ -2047,21 +2046,21 @@ EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, 
     result.D = Matrix<real_t>(0, 0);
     return result;
   }
-  
+
   // QR algorithm with eigenvector accumulation
   Matrix<real_t> A(mat);
-  Matrix<real_t> V = eye<real_t>(n); // Accumulate transformations
-  
+  Matrix<real_t> V = eye<real_t>(n);  // Accumulate transformations
+
   for (size_t iter = 0; iter < max_iter; ++iter) {
     // Perform QR decomposition
     QRDecomposition qr_result = qr(A, false);
-    
+
     // Accumulate eigenvectors: V = V * Q
     V = V * qr_result.Q;
-    
+
     // Form A_{k+1} = R * Q
     A = qr_result.R * qr_result.Q;
-    
+
     // Check convergence
     real_t off_diag_sum = 0.0;
     for (size_t i = 0; i < n; ++i) {
@@ -2071,16 +2070,16 @@ EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, 
         }
       }
     }
-    
+
     if (off_diag_sum < tol) {
       break;
     }
   }
-  
+
   EigenDecomposition result;
   result.V = V;
-  result.D = A; // Diagonal matrix with eigenvalues
-  
+  result.D = A;  // Diagonal matrix with eigenvalues
+
   return result;
 }
 
@@ -2089,31 +2088,31 @@ EigenDecomposition eigdecomp(const Matrix<data_t>& mat, size_t max_iter = 1000, 
 /// @param max_iter Maximum number of iterations (default: 1000)
 /// @param tol Convergence tolerance (default: EPSILON)
 /// @returns EigenResult structure containing eigenvalues and eigenvectors
-template<typename data_t>
+template <typename data_t>
 EigenResult eig(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = EPSILON)
 {
   if (mat.rows() != mat.cols()) {
     throw MathLibError("Eigenvalue computation requires square matrix");
   }
-  
+
   size_t n = mat.rows();
   EigenResult result;
-  
+
   if (n == 0) {
     result.values = Vector<real_t>(0);
     result.vectors = std::vector<Vector<real_t>>();
     return result;
   }
-  
+
   // Use eigdecomp to get both eigenvalues and eigenvectors
   EigenDecomposition decomp = eigdecomp(mat, max_iter, tol);
-  
+
   // Extract eigenvalues from diagonal of D
   result.values = Vector<real_t>(n);
   for (size_t i = 0; i < n; ++i) {
     result.values[i] = decomp.D[i * n + i];
   }
-  
+
   // Extract eigenvectors as columns of V
   result.vectors.resize(n);
   for (size_t col = 0; col < n; ++col) {
@@ -2122,8 +2121,153 @@ EigenResult eig(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = 
       result.vectors[col][row] = decomp.V[col * n + row];
     }
   }
-  
+
   return result;
+}
+
+/// @brief Compute the inverse of a square matrix using Gaussian elimination with partial pivoting
+/// @param mat Input square matrix
+/// @param tol Tolerance for considering elements as zero (default: EPSILON)
+/// @returns Inverse matrix
+/// @throws MathLibError if matrix is not square or is singular
+template <typename data_t>
+Matrix<real_t> inv(const Matrix<data_t>& mat, real_t tol = EPSILON)
+{
+  if (mat.rows() != mat.cols()) {
+    throw MathLibError("Matrix inversion requires square matrix");
+  }
+  size_t rows = mat.rows();
+  if (rows == 0) {
+    return Matrix<real_t>(0, 0);
+  }
+  // augmented matrix [A | I]
+  Matrix<real_t> augmented(rows, 2 * rows);
+  for (size_t r = 0; r < rows; ++r) {
+    for (size_t c = 0; c < rows; ++c) {
+      augmented(r + 1, c + 1) = static_cast<real_t>(mat(r + 1, c + 1));
+    }
+  }
+  for (size_t r = 0; r < rows; ++r) {
+    augmented(r + 1, rows + r + 1) = 1.0;
+  }
+  // Gaussian elimination with partial pivoting
+  for (size_t pivot_col = 0; pivot_col < rows; ++pivot_col) {
+    // find row with the largest abs. value in current column (partial pivoting)
+    size_t max_row = pivot_col;
+    real_t max_val = std::abs(augmented(pivot_col + 1, pivot_col + 1));
+    for (size_t r = pivot_col + 1; r < rows; ++r) {
+      real_t val = std::abs(augmented(r + 1, pivot_col + 1));
+      if (val > max_val) {
+        max_val = val;
+        max_row = r;
+      }
+    }
+    // singularity checl
+    if (max_val < tol) {
+      throw MathLibError("Matrix is singular - cannot compute inverse");
+    }
+    // swap rows if necessary
+    if (max_row != pivot_col) {
+      for (size_t c = 0; c < 2 * rows; ++c) {
+        std::swap(augmented(pivot_col + 1, c + 1), augmented(max_row + 1, c + 1));
+      }
+    }
+
+    // Make diagonal element = 1
+    real_t pivot = augmented(pivot_col + 1, pivot_col + 1);
+    for (size_t c = 0; c < 2 * rows; ++c) {
+      augmented(pivot_col + 1, c + 1) /= pivot;
+    }
+    // eliminate column
+    for (size_t r = 0; r < rows; ++r) {
+      if (r != pivot_col) {
+        real_t factor = augmented(r + 1, pivot_col + 1);
+        for (size_t c = 0; c < 2 * rows; ++c) {
+          augmented(r + 1, c + 1) -= factor * augmented(pivot_col + 1, c + 1);
+        }
+      }
+    }
+  }
+  // extract inverse from augmented matrix
+  Matrix<real_t> inverse(rows, rows);
+  for (size_t r = 0; r < rows; ++r) {
+    for (size_t c = 0; c < rows; ++c) {
+      inverse(r + 1, c + 1) = augmented(r + 1, rows + c + 1);
+    }
+  }
+  return inverse;
+}
+
+/// @brief Compute the Moore-Penrose pseudoinverse of a matrix using QR decomposition
+/// @param mat Input matrix (can be rectangular or singular)
+/// @param tol Tolerance for considering singular values as zero (default: EPSILON)
+/// @returns Pseudoinverse matrix
+template <typename data_t>
+Matrix<real_t> pinv(const Matrix<data_t>& mat, real_t tol = EPSILON)
+{
+  size_t rows = mat.rows();
+  size_t cols = mat.cols();
+
+  if (rows == 0 || cols == 0) {
+    return Matrix<real_t>(cols, rows);
+  }
+  // convert to Matrix<real_t>
+  Matrix<real_t> A(rows, cols);
+  for (size_t r = 0; r < rows; ++r) {
+    for (size_t c = 0; c < cols; ++c) {
+      A(r + 1, c + 1) = static_cast<real_t>(mat(r + 1, c + 1));
+    }
+  }
+  if (rows >= cols) {
+    // tall or square matrix - compute right pseudoinverse
+    // use pinv(A) = inv(A' * A) * A', but handle rank deficiency
+    Matrix<real_t> AtA = transpose(A) * A;
+    // check if A'A is invertible by trying to compute its inverse
+    try {
+      Matrix<real_t> AtA_inv = inv(AtA, tol);
+      return AtA_inv * transpose(A);
+    } catch (const MathLibError&) {
+      // A'A is singular, use QR decomposition approach
+      Matrix<real_t> Q = orth(A, tol);
+      if (Q.cols() == 0) {
+        return Matrix<real_t>(cols, rows);
+      }
+      // for rank-deficient case, use orthogonal projection
+      Matrix<real_t> QtA = transpose(Q) * A;
+      try {
+        Matrix<real_t> QtA_inv = inv(QtA, tol);
+        return transpose(Q) * QtA_inv;
+      } catch (const MathLibError&) {
+        // fallback: return scaled transpose
+        return transpose(A) / (norm(A) * norm(A) + tol);
+      }
+    }
+  } else {
+    // wide matrix - compute left pseudoinverse
+    // pinv(A) = A' * inv(A * A')
+    Matrix<real_t> AAt = A * transpose(A);
+    // check if AA' is invertible
+    try {
+      Matrix<real_t> AAt_inv = inv(AAt, tol);
+      return transpose(A) * AAt_inv;
+    } catch (const MathLibError&) {
+      // AA' is singular, use QR decomposition on transpose
+      Matrix<real_t> At = transpose(A);
+      Matrix<real_t> Q = orth(At, tol);
+      if (Q.cols() == 0) {
+        return Matrix<real_t>(cols, rows);
+      }
+      // similar approach for wide matrices
+      Matrix<real_t> QtAt = transpose(Q) * At;
+      try {
+        Matrix<real_t> QtAt_inv = inv(QtAt, tol);
+        return Q * QtAt_inv;
+      } catch (const MathLibError&) {
+        // fallback: return scaled transpose
+        return transpose(A) / (norm(A) * norm(A) + tol);
+      }
+    }
+  }
 }
 
 /// @brief Element-wise fuzzy equality comparison for matrices
@@ -2131,8 +2275,7 @@ EigenResult eig(const Matrix<data_t>& mat, size_t max_iter = 1000, real_t tol = 
 /// @param rhs Right-hand side matrix
 /// @param epsilon Tolerance for comparison (default: EPSILON)
 /// @returns Matrix of bool with true where elements are approximately equal
-inline Matrix<bool>
-isFuzzyEqual(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
+inline Matrix<bool> isFuzzyEqual(const Matrix<real_t>& lhs, const Matrix<real_t>& rhs, real_t epsilon = EPSILON)
 {
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {
     throw IncompatibleSizeError(lhs.rows(), lhs.cols(), rhs.rows(), rhs.cols());

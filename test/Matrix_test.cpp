@@ -1831,3 +1831,466 @@ TEST(MatrixTest, EigenvaluesEdgeCases)
   EXPECT_THROW(eigdecomp(non_square), MathLibError);
   EXPECT_THROW(eig(non_square), MathLibError);
 }
+
+TEST(MatrixTest, InverseIdentity)
+{
+  // Identity matrix inverse should be identity
+  Matrix<real_t> I = eye<real_t>(3);
+  Matrix<real_t> inv_I = inv(I);
+
+  EXPECT_EQ(inv_I.rows(), 3);
+  EXPECT_EQ(inv_I.cols(), 3);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(inv_I[i], I[i], 1e-10);
+  }
+}
+
+TEST(MatrixTest, InverseSimple2x2)
+{
+  // Simple 2x2 matrix with known inverse
+  // A = [1, 2; 3, 4], det(A) = -2
+  // inv(A) = [-2, 1; 1.5, -0.5]
+  Matrix<real_t> A = {{1.0, 2.0}, {3.0, 4.0}};
+  Matrix<real_t> inv_A = inv(A);
+
+  EXPECT_EQ(inv_A.rows(), 2);
+  EXPECT_EQ(inv_A.cols(), 2);
+
+  // Check A * inv(A) = I
+  Matrix<real_t> product = A * inv_A;
+  Matrix<real_t> I = eye<real_t>(2);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-10);
+  }
+
+  // Check inv(A) * A = I
+  Matrix<real_t> product2 = inv_A * A;
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product2[i], I[i], 1e-10);
+  }
+}
+
+TEST(MatrixTest, InverseDiagonal)
+{
+  // Diagonal matrix inverse should have reciprocal diagonal elements
+  Matrix<real_t> D = diag({2.0, 4.0, 0.5});
+  Matrix<real_t> inv_D = inv(D);
+
+  EXPECT_EQ(inv_D.rows(), 3);
+  EXPECT_EQ(inv_D.cols(), 3);
+
+  // Check diagonal elements are reciprocals
+  EXPECT_NEAR(inv_D(1, 1), 0.5, 1e-10);   // 1/2.0
+  EXPECT_NEAR(inv_D(2, 2), 0.25, 1e-10);  // 1/4.0
+  EXPECT_NEAR(inv_D(3, 3), 2.0, 1e-10);   // 1/0.5
+
+  // Check off-diagonal elements are zero
+  EXPECT_NEAR(inv_D(1, 2), 0.0, 1e-10);
+  EXPECT_NEAR(inv_D(1, 3), 0.0, 1e-10);
+  EXPECT_NEAR(inv_D(2, 1), 0.0, 1e-10);
+  EXPECT_NEAR(inv_D(2, 3), 0.0, 1e-10);
+  EXPECT_NEAR(inv_D(3, 1), 0.0, 1e-10);
+  EXPECT_NEAR(inv_D(3, 2), 0.0, 1e-10);
+
+  // Verify D * inv(D) = I
+  Matrix<real_t> product = D * inv_D;
+  Matrix<real_t> I = eye<real_t>(3);
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-10);
+  }
+}
+
+TEST(MatrixTest, InverseSymmetric)
+{
+  // Symmetric matrix
+  Matrix<real_t> S = {{4.0, 2.0, 1.0}, {2.0, 5.0, 3.0}, {1.0, 3.0, 6.0}};
+  Matrix<real_t> inv_S = inv(S);
+
+  EXPECT_EQ(inv_S.rows(), 3);
+  EXPECT_EQ(inv_S.cols(), 3);
+
+  // Verify S * inv(S) = I
+  Matrix<real_t> product = S * inv_S;
+  Matrix<real_t> I = eye<real_t>(3);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-8);
+  }
+
+  // Verify inv(S) * S = I
+  Matrix<real_t> product2 = inv_S * S;
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product2[i], I[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, InverseLargerMatrix)
+{
+  // Test with 4x4 matrix
+  Matrix<real_t> A = {{2.0, 1.0, 0.0, 0.0}, {1.0, 2.0, 1.0, 0.0}, {0.0, 1.0, 2.0, 1.0}, {0.0, 0.0, 1.0, 2.0}};
+
+  Matrix<real_t> inv_A = inv(A);
+
+  EXPECT_EQ(inv_A.rows(), 4);
+  EXPECT_EQ(inv_A.cols(), 4);
+
+  // Verify A * inv(A) = I
+  Matrix<real_t> product = A * inv_A;
+  Matrix<real_t> I = eye<real_t>(4);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, InverseNonSquareThrowsError)
+{
+  // Non-square matrix should throw error
+  Matrix<real_t> rect = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
+  EXPECT_THROW(inv(rect), MathLibError);
+}
+
+TEST(MatrixTest, InverseSingularThrowsError)
+{
+  // Singular matrix should throw error
+  Matrix<real_t> singular = {{1.0, 2.0}, {2.0, 4.0}};  // Row 2 = 2 * Row 1
+  EXPECT_THROW(inv(singular), MathLibError);
+
+  // Zero matrix
+  Matrix<real_t> zero_mat(3, 3);
+  EXPECT_THROW(inv(zero_mat), MathLibError);
+
+  // Matrix with zero determinant
+  Matrix<real_t> zero_det = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, {7.0, 8.0, 9.0}};
+  EXPECT_THROW(inv(zero_det), MathLibError);
+}
+
+TEST(MatrixTest, InverseEmptyMatrix)
+{
+  // Empty matrix should return empty matrix
+  Matrix<real_t> empty(0, 0);
+  Matrix<real_t> inv_empty = inv(empty);
+
+  EXPECT_EQ(inv_empty.rows(), 0);
+  EXPECT_EQ(inv_empty.cols(), 0);
+  EXPECT_TRUE(inv_empty.isEmpty());
+}
+
+TEST(MatrixTest, InverseMixedTypes)
+{
+  // Test with integer matrix
+  Matrix<int64_t> int_mat = {{2, 0}, {0, 3}};
+  Matrix<real_t> inv_int = inv(int_mat);
+
+  EXPECT_EQ(inv_int.rows(), 2);
+  EXPECT_EQ(inv_int.cols(), 2);
+
+  // Should return real_t matrix even for integer input
+  EXPECT_NEAR(inv_int(1, 1), 0.5, 1e-10);
+  EXPECT_NEAR(inv_int(2, 2), 1.0 / 3.0, 1e-10);
+  EXPECT_NEAR(inv_int(1, 2), 0.0, 1e-10);
+  EXPECT_NEAR(inv_int(2, 1), 0.0, 1e-10);
+}
+
+TEST(MatrixTest, InverseNumericalStability)
+{
+  // Test with a well-conditioned matrix that should work fine
+  Matrix<real_t> A = {{2.0, 1.0}, {1.0, 2.0}};
+  Matrix<real_t> inv_A = inv(A);
+
+  // Should still compute inverse without throwing
+  EXPECT_EQ(inv_A.rows(), 2);
+  EXPECT_EQ(inv_A.cols(), 2);
+
+  // Verify that A * inv(A) is close to identity
+  Matrix<real_t> product = A * inv_A;
+  Matrix<real_t> I = eye<real_t>(2);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-10);
+  }
+
+  // Test with slightly ill-conditioned but still invertible matrix
+  Matrix<real_t> B = {{1.0, 1.0}, {1.0, 1.0 + 1e-8}};
+  Matrix<real_t> inv_B = inv(B, 1e-12);  // Use smaller tolerance
+
+  // Verify B * inv(B) is close to identity with looser tolerance
+  Matrix<real_t> product_B = B * inv_B;
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product_B[i], I[i], 1e-6);  // Looser tolerance due to conditioning
+  }
+}
+
+TEST(MatrixTest, InverseToleranceParameter)
+{
+  // Test with custom tolerance
+  Matrix<real_t> nearly_singular = {{1.0, 2.0}, {1.0, 2.0 + 1e-12}};
+
+  // Should succeed with very small tolerance
+  EXPECT_NO_THROW(inv(nearly_singular, 1e-15));
+
+  // Should fail with larger tolerance
+  EXPECT_THROW(inv(nearly_singular, 1e-10), MathLibError);
+}
+
+TEST(MatrixTest, PinvSquareInvertible)
+{
+  // For square invertible matrices, pinv should equal inv
+  Matrix<real_t> A = {{2.0, 1.0}, {1.0, 3.0}};
+  Matrix<real_t> pinv_A = pinv(A);
+  Matrix<real_t> inv_A = inv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 2);
+  EXPECT_EQ(pinv_A.cols(), 2);
+
+  // pinv(A) should be close to inv(A)
+  for (size_t i = 0; i < inv_A.length(); ++i) {
+    EXPECT_NEAR(pinv_A[i], inv_A[i], 1e-10);
+  }
+
+  // A * pinv(A) = I
+  Matrix<real_t> product = A * pinv_A;
+  Matrix<real_t> I = eye<real_t>(2);
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-10);
+  }
+}
+
+TEST(MatrixTest, PinvTallMatrix)
+{
+  // Tall matrix (more rows than columns) - right pseudoinverse
+  Matrix<real_t> A = {{1.0, 2.0}, {3.0, 4.0}, {5.0, 6.0}};  // 3x2
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 2);  // n x m for m x n input
+  EXPECT_EQ(pinv_A.cols(), 3);
+
+  // For full rank tall matrix: pinv(A) * A should equal I (n×n)
+  Matrix<real_t> product = pinv_A * A;
+  Matrix<real_t> I = eye<real_t>(2);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-8);
+  }
+
+  // A * pinv(A) should be a projection matrix (m×m)
+  Matrix<real_t> product2 = A * pinv_A;
+  EXPECT_EQ(product2.rows(), 3);
+  EXPECT_EQ(product2.cols(), 3);
+
+  // Verify it's a projection: P * P = P
+  Matrix<real_t> product2_squared = product2 * product2;
+  for (size_t i = 0; i < product2.length(); ++i) {
+    EXPECT_NEAR(product2_squared[i], product2[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvWideMatrix)
+{
+  // Wide matrix (more columns than rows) - left pseudoinverse
+  Matrix<real_t> A = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};  // 2x3
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 3);  // n x m for m x n input
+  EXPECT_EQ(pinv_A.cols(), 2);
+
+  // For full rank wide matrix: A * pinv(A) should equal I (m×m)
+  Matrix<real_t> product = A * pinv_A;
+  Matrix<real_t> I = eye<real_t>(2);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-8);
+  }
+
+  // pinv(A) * A should be a projection matrix (n×n)
+  Matrix<real_t> product2 = pinv_A * A;
+  EXPECT_EQ(product2.rows(), 3);
+  EXPECT_EQ(product2.cols(), 3);
+
+  // Verify it's a projection: P * P = P
+  Matrix<real_t> product2_squared = product2 * product2;
+  for (size_t i = 0; i < product2.length(); ++i) {
+    EXPECT_NEAR(product2_squared[i], product2[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvSingularMatrix)
+{
+  // Singular square matrix
+  Matrix<real_t> A = {{1.0, 2.0}, {2.0, 4.0}};  // rank 1
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 2);
+  EXPECT_EQ(pinv_A.cols(), 2);
+
+  // For singular matrix: A * pinv(A) * A = A (Moore-Penrose property)
+  Matrix<real_t> product = A * pinv_A * A;
+
+  for (size_t i = 0; i < A.length(); ++i) {
+    EXPECT_NEAR(product[i], A[i], 1e-8);
+  }
+
+  // pinv(A) * A * pinv(A) = pinv(A)
+  Matrix<real_t> product2 = pinv_A * A * pinv_A;
+  for (size_t i = 0; i < pinv_A.length(); ++i) {
+    EXPECT_NEAR(product2[i], pinv_A[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvRankDeficientTall)
+{
+  // Tall rank-deficient matrix
+  Matrix<real_t> A = {{1.0, 2.0}, {2.0, 4.0}, {3.0, 6.0}};  // 3x2 but rank 1
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 2);
+  EXPECT_EQ(pinv_A.cols(), 3);
+
+  // Moore-Penrose properties
+  Matrix<real_t> APA = A * pinv_A * A;
+  for (size_t i = 0; i < A.length(); ++i) {
+    EXPECT_NEAR(APA[i], A[i], 1e-8);
+  }
+
+  Matrix<real_t> PAP = pinv_A * A * pinv_A;
+  for (size_t i = 0; i < pinv_A.length(); ++i) {
+    EXPECT_NEAR(PAP[i], pinv_A[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvRankDeficientWide)
+{
+  // Wide rank-deficient matrix
+  Matrix<real_t> A = {{1.0, 2.0, 3.0}, {2.0, 4.0, 6.0}};  // 2x3 but rank 1
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 3);
+  EXPECT_EQ(pinv_A.cols(), 2);
+
+  // Moore-Penrose properties
+  Matrix<real_t> APA = A * pinv_A * A;
+  for (size_t i = 0; i < A.length(); ++i) {
+    EXPECT_NEAR(APA[i], A[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvZeroMatrix)
+{
+  // Zero matrix
+  Matrix<real_t> A(3, 2);  // 3x2 zero matrix
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 2);
+  EXPECT_EQ(pinv_A.cols(), 3);
+
+  // Pseudoinverse of zero matrix should be zero
+  for (size_t i = 0; i < pinv_A.length(); ++i) {
+    EXPECT_NEAR(pinv_A[i], 0.0, 1e-10);
+  }
+}
+
+TEST(MatrixTest, PinvEmptyMatrix)
+{
+  // Empty matrix
+  Matrix<real_t> A(0, 0);
+  Matrix<real_t> pinv_A = pinv(A);
+
+  EXPECT_EQ(pinv_A.rows(), 0);
+  EXPECT_EQ(pinv_A.cols(), 0);
+  EXPECT_TRUE(pinv_A.isEmpty());
+}
+
+TEST(MatrixTest, PinvVector)
+{
+  // Column vector
+  Matrix<real_t> col_vec = {{1.0}, {2.0}, {3.0}};  // 3x1
+  Matrix<real_t> pinv_col = pinv(col_vec);
+
+  EXPECT_EQ(pinv_col.rows(), 1);
+  EXPECT_EQ(pinv_col.cols(), 3);
+
+  // For column vector v, pinv(v) = v^T / ||v||^2
+  real_t norm_sq = 1.0 + 4.0 + 9.0;  // 14
+  EXPECT_NEAR(pinv_col(1, 1), 1.0 / norm_sq, 1e-10);
+  EXPECT_NEAR(pinv_col(1, 2), 2.0 / norm_sq, 1e-10);
+  EXPECT_NEAR(pinv_col(1, 3), 3.0 / norm_sq, 1e-10);
+
+  // Row vector
+  Matrix<real_t> row_vec = {{1.0, 2.0, 3.0}};  // 1x3
+  Matrix<real_t> pinv_row = pinv(row_vec);
+
+  EXPECT_EQ(pinv_row.rows(), 3);
+  EXPECT_EQ(pinv_row.cols(), 1);
+
+  // For row vector v, pinv(v) = v^T / ||v||^2
+  EXPECT_NEAR(pinv_row(1, 1), 1.0 / norm_sq, 1e-10);
+  EXPECT_NEAR(pinv_row(2, 1), 2.0 / norm_sq, 1e-10);
+  EXPECT_NEAR(pinv_row(3, 1), 3.0 / norm_sq, 1e-10);
+}
+
+TEST(MatrixTest, PinvIdentity)
+{
+  // Identity matrix pseudoinverse should be identity
+  Matrix<real_t> I = eye<real_t>(3);
+  Matrix<real_t> pinv_I = pinv(I);
+
+  EXPECT_EQ(pinv_I.rows(), 3);
+  EXPECT_EQ(pinv_I.cols(), 3);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(pinv_I[i], I[i], 1e-10);
+  }
+}
+
+TEST(MatrixTest, PinvMixedTypes)
+{
+  // Test with integer matrix
+  Matrix<int64_t> int_mat = {{1, 2}, {3, 4}, {5, 6}};  // 3x2
+  Matrix<real_t> pinv_int = pinv(int_mat);
+
+  EXPECT_EQ(pinv_int.rows(), 2);
+  EXPECT_EQ(pinv_int.cols(), 3);
+
+  // Should return real_t matrix even for integer input
+  // Verify pinv(A) * A is close to I for tall matrix (correct property)
+  Matrix<real_t> A(3, 2);
+  A[0] = 1.0;
+  A[3] = 2.0;
+  A[1] = 3.0;
+  A[4] = 4.0;
+  A[2] = 5.0;
+  A[5] = 6.0;
+  Matrix<real_t> product = pinv_int * A;
+  Matrix<real_t> I = eye<real_t>(2);
+
+  for (size_t i = 0; i < I.length(); ++i) {
+    EXPECT_NEAR(product[i], I[i], 1e-8);
+  }
+}
+
+TEST(MatrixTest, PinvToleranceParameter)
+{
+  // Test with custom tolerance
+  Matrix<real_t> nearly_rank_def = {{1.0, 2.0}, {1.0 + 1e-12, 2.0 + 2e-12}};  // Nearly rank deficient
+
+  // Should handle with appropriate tolerance
+  Matrix<real_t> pinv_small_tol = pinv(nearly_rank_def, 1e-15);
+  Matrix<real_t> pinv_large_tol = pinv(nearly_rank_def, 1e-10);
+
+  EXPECT_EQ(pinv_small_tol.rows(), 2);
+  EXPECT_EQ(pinv_small_tol.cols(), 2);
+  EXPECT_EQ(pinv_large_tol.rows(), 2);
+  EXPECT_EQ(pinv_large_tol.cols(), 2);
+
+  // Different tolerances may give different results for nearly singular matrices
+  // But both should satisfy basic properties
+  Matrix<real_t> APA1 = nearly_rank_def * pinv_small_tol * nearly_rank_def;
+  Matrix<real_t> APA2 = nearly_rank_def * pinv_large_tol * nearly_rank_def;
+
+  for (size_t i = 0; i < nearly_rank_def.length(); ++i) {
+    EXPECT_NEAR(APA1[i], nearly_rank_def[i], 1e-6);
+    EXPECT_NEAR(APA2[i], nearly_rank_def[i], 1e-6);
+  }
+}
