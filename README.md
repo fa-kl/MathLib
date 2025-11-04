@@ -1,9 +1,16 @@
 # MathLib
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/fa-kl/MathLib/releases)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/fa-kl/MathLib/releases)
+[![CI](https://github.com/fa-kl/MathLib/actions/workflows/build.yml/badge.svg)](https://github.com/fa-kl/MathLib/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![C++](https://img.shields.io/badge/C++-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
 A modern C++23 library for mathematical operations including complex numbers, vectors, matrices, and linear algebra. 
+
+**Features:**
+- 🏗️ **Dual Library Support**: Available as both static (`.a`) and shared (`.so`) libraries
+- 🧪 **CI Protected**: All changes are tested with 311+ unit tests before merging
+- 📦 **Easy Integration**: CMake package configuration for seamless project integration
+- 🐧 **Linux Optimized**: Built and tested on Ubuntu with GCC 13.3.0 
 
 ## Features
   - Floating-point comparison
@@ -124,6 +131,8 @@ A modern C++23 library for mathematical operations including complex numbers, ve
   - QR decomposition: ```qr()```
   - Eigenvalues and -vectors: ```eig()```
   - SVD: ```svd()```
+  - Inverse: ```inv()```
+  - Pseudo-inverse: ```pinv()```
   - Normalization: ```normalize()``` (rows or columns)
   - Sum of elements: ```sum()``` (all, rows-wise, column-wise)
   - Element-wise rounding: ```round()```
@@ -141,10 +150,10 @@ A modern C++23 library for mathematical operations including complex numbers, ve
 
 ## Requirements
 - **C++23** compatible compiler:
-  - GCC 12 or higher
+  - GCC 13.3.0 or higher (recommended and tested)
   - Clang 16 or higher
-  - MSVC 2022 or higher (Visual Studio 2022)
 - **CMake 3.20** or higher
+- **Linux/Ubuntu** (primary supported platform)
 
 ## Installation
 
@@ -152,27 +161,20 @@ A modern C++23 library for mathematical operations including complex numbers, ve
 
 Download pre-compiled libraries from the [GitHub Releases](https://github.com/fa-kl/MathLib/releases) page.
 
-#### 1. Download the appropriate package
-- **Linux**: Download `mathlib-linux.tar.gz`
-- **Windows**: Download `mathlib-windows.zip`
-- **macOS**: Download `mathlib-macos.tar.gz`
+#### 1. Download the Linux package
+- **Ubuntu/Linux**: Download `mathlib-linux.tar.gz` from releases
 
 #### 2. Extract the package
 ```bash
-# Linux/macOS
 tar -xzf mathlib-linux.tar.gz
 cd mathlib-linux/
-
-# Windows (PowerShell)
-Expand-Archive mathlib-windows.zip
-cd mathlib-windows/
 ```
 
 #### 3. Choose your library type
 
 Each package contains both static and shared libraries:
-- **Static library**: `libMathLib.a` (Unix) or `MathLib.lib` (Windows)
-- **Shared library**: `libMathLib.so` (Linux), `libMathLib.dylib` (macOS), or `MathLib.dll` (Windows)
+- **Static library**: `libMathLib.a` (self-contained, ~30KB)
+- **Shared library**: `libMathLib.so` (requires runtime library, ~33KB)
 
 #### 4. Integrate with your project
 
@@ -200,11 +202,11 @@ target_include_directories(your_target PRIVATE ${MATHLIB_INCLUDE_DIR})
 # Link static library
 target_link_libraries(your_target PRIVATE "${MATHLIB_ROOT}/lib/libMathLib.a")
 
-# Or link shared library (Linux)
+# Or link shared library
 target_link_libraries(your_target PRIVATE "${MATHLIB_ROOT}/lib/libMathLib.so")
 ```
 
-##### Using pkg-config (Linux/macOS)
+##### Using pkg-config (Linux)
 ```bash
 # Copy .pc file to pkg-config directory or set PKG_CONFIG_PATH
 export PKG_CONFIG_PATH=/path/to/extracted/mathlib/lib/pkgconfig:$PKG_CONFIG_PATH
@@ -280,12 +282,12 @@ For simple projects, copy the `inc/` and `src/` directories:
 
 | Feature | Static Library | Shared Library |
 |---------|---------------|----------------|
-| **File size** | Larger executable | Smaller executable |
-| **Dependencies** | Self-contained | Requires .so/.dll/.dylib |
+| **File size** | Larger executable (~30KB embedded) | Smaller executable + separate .so |
+| **Dependencies** | Self-contained | Requires libMathLib.so (~33KB) |
 | **Loading time** | Faster startup | Slightly slower startup |
 | **Memory usage** | Higher (if multiple programs use it) | Lower (shared between programs) |
-| **Distribution** | Easier (single file) | Requires library file |
-| **Updates** | Need to recompile | Can update library separately |
+| **Distribution** | Easier (single executable) | Requires library file + executable |
+| **Updates** | Need to recompile application | Can update library separately |
 
 **Recommendation**: Use static libraries for simpler distribution, shared libraries for system-wide installation or when multiple applications use MathLib.
 
@@ -314,6 +316,23 @@ int main() {
     return 0;
 }
 ```
+
+## Continuous Integration & Quality Assurance
+
+This project uses GitHub Actions to ensure code quality:
+
+- ✅ **Automated Building**: Both static and shared libraries are built on Ubuntu
+- ✅ **Comprehensive Testing**: All 311+ unit tests must pass
+- ✅ **Branch Protection**: Direct pushes to `main` are blocked - all changes must go through Pull Requests
+- ✅ **CI Validation**: Only code that passes all tests can be merged
+
+### Development Workflow
+1. Create feature branch: `git checkout -b feature/my-feature`
+2. Make changes and commit
+3. Push branch: `git push origin feature/my-feature`  
+4. Create Pull Request on GitHub
+5. CI automatically runs build and tests
+6. Merge only after CI passes ✅
 
 ## Running Tests
 
