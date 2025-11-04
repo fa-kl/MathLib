@@ -30,6 +30,15 @@ while [[ $# -gt 0 ]]; do
             PACKAGE=true
             shift
             ;;
+        --release)
+            RELEASE=true
+            RELEASE_VERSION="$2"
+            if [[ -z "$RELEASE_VERSION" ]]; then
+                echo "Error: --release requires a version (e.g., --release v1.0.2)"
+                exit 1
+            fi
+            shift 2
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
@@ -37,6 +46,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --coverage   Enable code coverage"
             echo "  --install    Install libraries to install/ directory"
             echo "  --package    Create distribution packages"
+            echo "  --release <version>  Create release package (e.g., --release v1.0.2)"
             echo "  -h, --help   Show this help message"
             exit 0
             ;;
@@ -101,6 +111,50 @@ if [ "$PACKAGE" = true ]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Optional: Create Release Package
+# -----------------------------------------------------------------------------
+if [ "$RELEASE" = true ]; then
+    # Ensure we have built and installed first
+    if [ ! -d "install" ]; then
+        echo -e "\n${YELLOW}> Release requires installation, building and installing first...${RESET}"
+        INSTALL=true
+        cd $BUILD_DIR
+        make install
+        cd ..
+    fi
+    
+    echo -e "\n${GREEN}> Creating release package: ${RELEASE_VERSION}${RESET}"
+    
+    # Create release directory structure
+    RELEASE_DIR="release/${RELEASE_VERSION}"
+    mkdir -p "${RELEASE_DIR}/lib" "${RELEASE_DIR}/include/MathLib" "${RELEASE_DIR}/cmake"
+    
+    # Copy libraries
+    cp install/lib/libMathLib.a install/lib/libMathLib.so* "${RELEASE_DIR}/lib/"
+    
+    # Copy headers
+    cp -r install/include/MathLib/* "${RELEASE_DIR}/include/MathLib/"
+    
+    # Copy CMake configuration
+    cp -r install/lib/cmake/MathLib "${RELEASE_DIR}/cmake/"
+    
+    # Copy documentation
+    cp README.md LICENSE "${RELEASE_DIR}/"
+    
+    # Copy installation guide
+    cp release/INSTALL.md "${RELEASE_DIR}/"
+    
+    # Create compressed archive
+    ARCHIVE_NAME="release/mathlib-${RELEASE_VERSION}-linux-x64.tar.gz"
+    tar -czf "${ARCHIVE_NAME}" -C "${RELEASE_DIR}" .
+    
+    echo -e "${BLUE}Release package created:${RESET}"
+    echo -e "${BLUE}  • Directory: ${RELEASE_DIR}${RESET}"
+    echo -e "${BLUE}  • Archive: ${ARCHIVE_NAME} ($(du -h ${ARCHIVE_NAME} | cut -f1))${RESET}"
+    echo -e "${BLUE}  • Contents: libraries, headers, CMake configs, docs${RESET}"
+fi
+
+# -----------------------------------------------------------------------------
 # Done
 # -----------------------------------------------------------------------------
 echo -e "\n${GREEN}> All builds completed successfully!${RESET}"
@@ -108,3 +162,4 @@ echo -e "${YELLOW}Usage examples:${RESET}"
 echo -e "  • Run tests: ./test.sh"
 echo -e "  • Install: $0 --install"
 echo -e "  • Create packages: $0 --package"
+echo -e "  • Create release: $0 --release v1.0.2"

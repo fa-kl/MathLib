@@ -3,6 +3,9 @@ build/
 install/
 cmake-build-*/
 
+# Release direcotry
+release/
+
 # Doxygen generated documentation
 docs/
 html/
