@@ -1,0 +1,73 @@
+name: Build Libraries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    name: CI - Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.20'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INSTALL_PREFIX=install \
+              -DENABLE_COVERAGE=OFF
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure -C Release
+
+    - name: Install
+      run: cmake --install build --config Release
+
+    - name: Package
+      run: |
+        cd build
+        cpack -C Release
+
+    - name: Create artifact directory
+      run: |
+        mkdir -p artifacts/mathlib-linux
+        
+        # Copy libraries
+        cp build/lib/lib* artifacts/mathlib-linux/ || true
+        
+        # Copy headers
+        cp -r install/include artifacts/mathlib-linux/
+        
+        # Copy CMake configs
+        cp -r install/lib/cmake artifacts/mathlib-linux/ || true
+        
+        # Copy packages
+        cp build/*.tar.gz artifacts/mathlib-linux/ || true
+        cp build/*.zip artifacts/mathlib-linux/ || true
+        cp build/*.deb artifacts/mathlib-linux/ || true
+        cp build/*.rpm artifacts/mathlib-linux/ || true
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mathlib-linux
+        path: artifacts/mathlib-linux/
+

@@ -204,14 +204,6 @@ public:
   /// @returns True if empty, false otherwise
   bool isEmpty() const { return length() == 0; }
 
-  /// @brief Get pointer to underlying data
-  /// @returns Pointer to data array
-  data_t* data() { return m_data.get(); }
-
-  /// @brief Get const pointer to underlying data
-  /// @returns Const pointer to data array
-  const data_t* data() const { return m_data.get(); }
-
   /// @brief Access element at linear index i (0-based indexing)
   /// @param i Linear index
   /// @returns Reference to element at index i

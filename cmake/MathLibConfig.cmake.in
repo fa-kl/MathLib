@@ -1,0 +1,21 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies if any
+# find_dependency(SomePackage REQUIRED)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/MathLibTargets.cmake")
+
+# Provide convenience variables
+set(MathLib_LIBRARIES MathLib::MathLib_static MathLib::MathLib_shared)
+set(MathLib_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/MathLib")
+
+# Check that the targets exist
+check_required_components(MathLib)
+
+# Set default target (static library)
+if(NOT TARGET MathLib::MathLib)
+    add_library(MathLib::MathLib ALIAS MathLib::MathLib_static)
+endif()

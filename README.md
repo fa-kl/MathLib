@@ -148,7 +148,73 @@ A modern C++23 library for mathematical operations including complex numbers, ve
 
 ## Installation
 
-### Option 1: Using CMake (Recommended)
+### Option 1: Pre-built Libraries (Recommended)
+
+Download pre-compiled libraries from the [GitHub Releases](https://github.com/fa-kl/MathLib/releases) page.
+
+#### 1. Download the appropriate package
+- **Linux**: Download `mathlib-linux.tar.gz`
+- **Windows**: Download `mathlib-windows.zip`
+- **macOS**: Download `mathlib-macos.tar.gz`
+
+#### 2. Extract the package
+```bash
+# Linux/macOS
+tar -xzf mathlib-linux.tar.gz
+cd mathlib-linux/
+
+# Windows (PowerShell)
+Expand-Archive mathlib-windows.zip
+cd mathlib-windows/
+```
+
+#### 3. Choose your library type
+
+Each package contains both static and shared libraries:
+- **Static library**: `libMathLib.a` (Unix) or `MathLib.lib` (Windows)
+- **Shared library**: `libMathLib.so` (Linux), `libMathLib.dylib` (macOS), or `MathLib.dll` (Windows)
+
+#### 4. Integrate with your project
+
+##### Using CMake (Recommended)
+```cmake
+# Method 1: Use the provided CMake config
+find_package(MathLib REQUIRED PATHS /path/to/extracted/mathlib/cmake)
+
+# Link static library (default)
+target_link_libraries(your_target PRIVATE MathLib::MathLib_static)
+
+# Or link shared library
+target_link_libraries(your_target PRIVATE MathLib::MathLib_shared)
+```
+
+##### Manual Integration
+```cmake
+# Set paths
+set(MATHLIB_ROOT "/path/to/extracted/mathlib")
+set(MATHLIB_INCLUDE_DIR "${MATHLIB_ROOT}/include/MathLib")
+
+# Include headers
+target_include_directories(your_target PRIVATE ${MATHLIB_INCLUDE_DIR})
+
+# Link static library
+target_link_libraries(your_target PRIVATE "${MATHLIB_ROOT}/lib/libMathLib.a")
+
+# Or link shared library (Linux)
+target_link_libraries(your_target PRIVATE "${MATHLIB_ROOT}/lib/libMathLib.so")
+```
+
+##### Using pkg-config (Linux/macOS)
+```bash
+# Copy .pc file to pkg-config directory or set PKG_CONFIG_PATH
+export PKG_CONFIG_PATH=/path/to/extracted/mathlib/lib/pkgconfig:$PKG_CONFIG_PATH
+
+# In your Makefile or build script
+CFLAGS += $(shell pkg-config --cflags mathlib)
+LDFLAGS += $(shell pkg-config --libs mathlib)
+```
+
+### Option 2: Build from Source
 
 #### 1. Clone the repository
 ```bash
@@ -156,35 +222,34 @@ git clone https://github.com/fa-kl/MathLib.git
 cd MathLib
 ```
 
-#### 2. Build the library
+#### 2. Build both static and shared libraries
 ```bash
-mkdir build
-cd build
-cmake ..
-make
+./build.sh --install --package
 ```
 
-Or use the provided shell scripts:
+This creates:
+- Libraries in `build/lib/`
+- Headers and CMake configs in `install/`
+- Distribution packages in `build/`
+
+#### 3. Manual build with CMake
 ```bash
-./build.sh
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install
+make -j$(nproc)
+make install
 ```
 
-#### 3. Link to your project
-In your project's `CMakeLists.txt`:
+#### 4. Link to your project
 ```cmake
 # Add MathLib as subdirectory
 add_subdirectory(path/to/MathLib)
 
-# Link against your executable/library
-target_link_libraries(your_target PRIVATE MathLib)
-```
+# Link static library (default)
+target_link_libraries(your_target PRIVATE MathLib::MathLib_static)
 
-### Option 2: Manual Integration
-
-Simply copy the `inc/` and `src/` directories into your project and include the headers:
-
-```cpp
-#include "mathlib.hpp"  // Main header that includes all components
+# Or link shared library
+target_link_libraries(your_target PRIVATE MathLib::MathLib_shared)
 ```
 
 ### Option 3: Git Submodule
@@ -198,8 +263,31 @@ git submodule update --init --recursive
 Then in your `CMakeLists.txt`:
 ```cmake
 add_subdirectory(external/MathLib)
-target_link_libraries(your_target PRIVATE MathLib)
+# Use static library by default, or specify explicitly
+target_link_libraries(your_target PRIVATE MathLib::MathLib_static)
+# target_link_libraries(your_target PRIVATE MathLib::MathLib_shared)
 ```
+
+### Option 4: Header-only Integration
+
+For simple projects, copy the `inc/` and `src/` directories:
+
+```cpp
+#include "mathlib.hpp"  // Main header that includes all components
+```
+
+### Library Type Comparison
+
+| Feature | Static Library | Shared Library |
+|---------|---------------|----------------|
+| **File size** | Larger executable | Smaller executable |
+| **Dependencies** | Self-contained | Requires .so/.dll/.dylib |
+| **Loading time** | Faster startup | Slightly slower startup |
+| **Memory usage** | Higher (if multiple programs use it) | Lower (shared between programs) |
+| **Distribution** | Easier (single file) | Requires library file |
+| **Updates** | Need to recompile | Can update library separately |
+
+**Recommendation**: Use static libraries for simpler distribution, shared libraries for system-wide installation or when multiple applications use MathLib.
 
 ## Quick Start Example
 

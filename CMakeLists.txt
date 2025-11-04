@@ -77,10 +77,38 @@ endif()
 # ---------------------------------------------------------------------------------------
 # Library Sources & Headers
 # ---------------------------------------------------------------------------------------
-# Static Library
 file(GLOB LIB_SOURCES src/*.cpp)
-add_library("${LIB_NAME}" STATIC ${LIB_SOURCES})
-target_include_directories("${LIB_NAME}" PUBLIC inc/)
+
+# Create both static and shared libraries
+add_library("${LIB_NAME}_static" STATIC ${LIB_SOURCES})
+add_library("${LIB_NAME}_shared" SHARED ${LIB_SOURCES})
+
+# Set output names to avoid conflicts
+set_target_properties("${LIB_NAME}_static" PROPERTIES
+    OUTPUT_NAME "${LIB_NAME}"
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+)
+
+set_target_properties("${LIB_NAME}_shared" PROPERTIES
+    OUTPUT_NAME "${LIB_NAME}"
+    VERSION ${LIB_VERSION}
+    SOVERSION 1
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+)
+
+# Include directories for both libraries
+target_include_directories("${LIB_NAME}_static" PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories("${LIB_NAME}_shared" PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+    $<INSTALL_INTERFACE:include>
+)
+
+# Create an alias for backward compatibility (defaults to static)
+add_library("${LIB_NAME}" ALIAS "${LIB_NAME}_static")
 
 # ---------------------------------------------------------------------------------------
 # Main Executable for Debugging
@@ -95,6 +123,10 @@ target_link_libraries(${MAIN_TARGET} PRIVATE "${LIB_NAME}")
 include(CTest)
 enable_testing()
 include(FetchContent)
+
+# Configure GoogleTest to not install itself
+set(INSTALL_GTEST OFF CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)")
+
 FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
@@ -160,3 +192,80 @@ if(ENABLE_COVERAGE)
         message(WARNING "lcov and/or genhtml not found. Coverage target not available.")
     endif()
 endif()
+
+# ---------------------------------------------------------------------------------------
+# Installation Configuration
+# ---------------------------------------------------------------------------------------
+include(GNUInstallDirs)
+
+# Install libraries
+install(TARGETS "${LIB_NAME}_static" "${LIB_NAME}_shared"
+    EXPORT "${LIB_NAME}Targets"
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install headers
+install(DIRECTORY inc/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${LIB_NAME}
+    FILES_MATCHING PATTERN "*.hpp"
+)
+
+# Install CMake config files
+install(EXPORT "${LIB_NAME}Targets"
+    FILE "${LIB_NAME}Targets.cmake"
+    NAMESPACE "${LIB_NAME}::"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME}
+)
+
+# Create config file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}ConfigVersion.cmake"
+    VERSION ${LIB_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${LIB_NAME}Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}Config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME}
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}Config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}ConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${LIB_NAME}
+)
+
+# ---------------------------------------------------------------------------------------
+# CPack Configuration for Release Packaging
+# ---------------------------------------------------------------------------------------
+include(CPack)
+
+set(CPACK_PACKAGE_NAME "${LIB_NAME}")
+set(CPACK_PACKAGE_VERSION "${LIB_VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "MathLib - A comprehensive C++ mathematics library")
+set(CPACK_PACKAGE_VENDOR "fakl")
+set(CPACK_PACKAGE_CONTACT "your-email@example.com")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+# Package formats
+set(CPACK_GENERATOR "TGZ;ZIP")
+if(UNIX AND NOT APPLE)
+    list(APPEND CPACK_GENERATOR "DEB;RPM")
+endif()
+
+# DEB package configuration
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "fakl")
+set(CPACK_DEBIAN_PACKAGE_SECTION "libs")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+
+# RPM package configuration
+set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+set(CPACK_RPM_PACKAGE_LICENSE "See LICENSE file")
+
+# Include both static and shared libraries in packages
+set(CPACK_COMPONENTS_ALL libraries headers cmake)

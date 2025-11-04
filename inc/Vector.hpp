@@ -152,14 +152,6 @@ public:
   /// @returns True if empty, false otherwise
   bool isEmpty() const { return length() == 0; }
 
-  /// @brief Get pointer to underlying data
-  /// @returns Pointer to data array
-  data_t* data() { return m_data.get(); }
-
-  /// @brief Get const pointer to underlying data
-  /// @returns Const pointer to data array
-  const data_t* data() const { return m_data.get(); }
-
   /// @brief Access element at index i (0-based indexing)
   /// @param i Index
   /// @returns Reference to element at index i
@@ -1404,6 +1396,20 @@ template <typename data_t>
 std::string to_string(const mathlib::Vector<data_t>& vec)
 {
   return mathlib::to_string(vec);
+}
+
+/// @brief Create a std::vector from this Vector
+template <typename data_t>
+std::vector<data_t> to_vector(const mathlib::Vector<data_t>& vec)
+{
+  size_t len = vec.length();
+  ;
+  std::vector<data_t> result;
+  result.reserve(len);
+  for (size_t i = 0; i < len; ++i) {
+    result.push_back(vec[i]);
+  }
+  return result;
 }
 
 #endif
